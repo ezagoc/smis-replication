@@ -1,0 +1,256 @@
+﻿# 0.0 Set up the environment, clean it and set working directory to the code path
+rm(list = ls())
+rstudioapi::getActiveDocumentContext
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# 1.0 Import functions and packages
+library(purrr)
+
+src_path <- "../../src/utils/"
+source_files <- c(
+  "funcs_analysis.R",
+  "constants_final.R",
+  "import_data.R"
+)
+
+map(paste0(src_path, source_files), source)
+ipak(packages)
+
+# 2.0 Define constants
+country <- "joint"
+data_type <- "Baseline"
+stage <- "stage1_2"
+list_types <- c("log_")
+file_stub <- "extensive_verifiability_noblockfes_p90_p0"
+n_posts_thr <- 0
+n_permutations <- 500
+results_root <- "../../results"
+original_dir <- file.path(results_root, "original")
+permutations_dir <- file.path(results_root, "permutations")
+plots_dir <- file.path(results_root, "plots")
+
+outcome_roots <- c("verifiability", "non_ver", "true", "fake", "n_posts")
+output_names <- c("ver", "non_ver", "true", "fake", "n_posts")
+batch_specs <- list(
+  b1 = "b1",
+  b2 = "b2",
+  both = NULL
+)
+
+extract_total_treated <- function(data, outcome_vars) {
+  estimates <- map_dbl(outcome_vars, function(outcome_var) {
+    fmla <- as.formula(
+      paste0(
+        outcome_var, "_base ~ total_treated + dummy_second + dummy_third | ",
+        "pais + batch_id"
+      )
+    )
+
+    fit <- feols(fmla, data = data)
+    unname(coef(fit)[["total_treated"]])
+  })
+
+  stats::setNames(as.list(estimates), output_names) |>
+    as_tibble()
+}
+
+prepare_batch_data <- function(data, batch_filter = NULL) {
+  if (is.null(batch_filter)) {
+    return(data)
+  }
+
+  data |>
+    filter(batch_id == batch_filter)
+}
+
+dir.create(results_root, showWarnings = FALSE, recursive = TRUE)
+dir.create(original_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(permutations_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
+
+write_outputs <- function(type, batch_name, original_coefs, permutation_coefs) {
+  file_code <- paste0(file_stub, "_", batch_name, "_500perm")
+  original_path <- file.path(original_dir, paste0(type, file_code, ".xlsx"))
+  permutations_path <- file.path(permutations_dir, paste0(type, file_code, ".xlsx"))
+  plot_path <- file.path(plots_dir, paste0(type, file_code, ".pdf"))
+
+  write_xlsx(
+    original_coefs,
+    original_path
+  )
+
+  write_xlsx(
+    permutation_coefs,
+    permutations_path
+  )
+
+  addon <- if (type == "log_") {
+    "log "
+  } else if (type == "arc_") {
+    "arcsinh "
+  } else {
+    ""
+  }
+
+  final <- original_coefs |>
+    pivot_longer(cols = everything(), names_to = "var", values_to = "coef") |>
+    left_join(
+      permutation_coefs |>
+        summarise(across(everything(), sd, na.rm = TRUE)) |>
+        pivot_longer(cols = everything(), names_to = "var", values_to = "sd"),
+      by = "var"
+    ) |>
+    mutate(
+      Variable = case_when(
+        var == "ver" ~ paste0(addon, "Verifiable RTs + Posts"),
+        var == "non_ver" ~ paste0(addon, "Non-Verifiable RTs + Posts"),
+        var == "true" ~ paste0(addon, "True RTs + Posts"),
+        var == "fake" ~ paste0(addon, "Fake RTs + Posts"),
+        var == "n_posts" ~ paste0(addon, "Number of RTs + Posts")
+      )
+    )
+
+  final$Variable <- factor(
+    final$Variable,
+    levels = c(
+      paste0(addon, "Fake RTs + Posts"),
+      paste0(addon, "True RTs + Posts"),
+      paste0(addon, "Verifiable RTs + Posts"),
+      paste0(addon, "Non-Verifiable RTs + Posts"),
+      paste0(addon, "Number of RTs + Posts")
+    )
+  )
+
+  results_plot <- ggplot(data = final, aes(y = Variable, x = coef)) +
+    geom_point() +
+    geom_linerange(aes(xmin = coef - 1.96 * sd, xmax = coef + 1.96 * sd), size = 1) +
+    geom_vline(xintercept = 0, linetype = "solid", color = "black", size = 0.5) +
+    theme_bw() +
+    xlab("Total Treated Estimate with 95% Confidence Interval") +
+    ylab("Variable") +
+    theme(
+      panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
+      panel.grid.minor = element_blank()
+    )
+
+  if (addon == "log ") {
+    results_plot <- results_plot + xlim(-1, 0.2)
+  }
+
+  ggsave(
+    plot = results_plot,
+    filename = plot_path,
+    device = cairo_pdf,
+    width = 8.22,
+    height = 6.59,
+    units = "in"
+  )
+}
+
+# 3.0 Load and prepare analysis data
+belp90 <- read_parquet("../../data/analysis/joint/below_p90_p95_divider.parquet") |>
+  select(-n_posts_base)
+
+baseline_keys <- bind_rows(
+  read_parquet("../../data/analysis/KE/baseline/baseline_divided_b1b2.parquet") |>
+    mutate(pais = "KE"),
+  read_parquet("../../data/analysis/SA/baseline/baseline_divided_b1b2.parquet") |>
+    mutate(pais = "SA")
+) |>
+  select(follower_id, username, pais, batch_id) |>
+  distinct()
+
+attrition <- read_parquet("../../data/analysis/attrition.parquet") |>
+  mutate(batch_id = "b2")
+
+attrition_flags <- baseline_keys |>
+  left_join(attrition, by = c("username", "pais", "batch_id")) |>
+  transmute(
+    follower_id,
+    pais,
+    batch_id,
+    dummy_second = ifelse(!is.na(dummy_attrition) & pais == "SA" & dummy_attrition == 1, 1, 0),
+    dummy_third = ifelse(!is.na(dummy_attrition) & dummy_attrition == 1, 1, 0)
+  ) |>
+  distinct()
+
+df <- get_analysis_ver_final_winsor(
+  stage = stage,
+  batches = "b1b2",
+  initial_path = "../../../../"
+) |>
+  left_join(belp90, by = c("follower_id", "batch_id", "pais")) |>
+  left_join(attrition_flags, by = c("follower_id", "pais", "batch_id")) |>
+  mutate(
+    dummy_second = coalesce(dummy_second, 0),
+    dummy_third = coalesce(dummy_third, 0)
+  ) |>
+  filter(below_p90 == 1) |>
+  filter(total_influencers == 1) |>
+  filter(n_posts_base > n_posts_thr)
+
+# 4.0 Run the specification for each batch sample
+for (type in list_types) {
+  outcome_vars <- paste0(type, outcome_roots)
+
+  base_columns <- c(
+    "follower_id",
+    "pais",
+    "batch_id",
+    "total_treated",
+    "dummy_second",
+    "dummy_third",
+    paste0(outcome_vars, "_base")
+  )
+
+  analysis_df <- df |>
+    select(all_of(base_columns))
+
+  for (batch_name in names(batch_specs)) {
+    message("Running sample: ", batch_name)
+
+    batch_filter <- batch_specs[[batch_name]]
+    batch_df <- prepare_batch_data(analysis_df, batch_filter)
+
+    original_coefs <- extract_total_treated(
+      data = batch_df,
+      outcome_vars = outcome_vars
+    )
+
+    permutation_coefs <- map_dfr(seq_len(n_permutations), function(i) {
+      message("Permutation ", i, " / ", n_permutations, " for ", batch_name)
+
+      perm_treated_col <- paste0("n_influencers_followed_treatment_p", i)
+
+      permuted_treatment <- read_parquet(
+        paste0(
+          "../../data/analysis/joint/small_ties_b1b2/small_tie",
+          i,
+          ".parquet"
+        )
+      ) |>
+        select(follower_id, pais, batch_id, all_of(perm_treated_col))
+
+      permuted_batch_df <- batch_df |>
+        left_join(permuted_treatment, by = c("follower_id", "pais", "batch_id"))
+
+      permuted_batch_df$total_treated <- permuted_batch_df[[perm_treated_col]]
+      permuted_batch_df[[perm_treated_col]] <- NULL
+
+      extract_total_treated(
+        data = permuted_batch_df,
+        outcome_vars = outcome_vars
+      )
+    })
+
+    write_outputs(
+      type = type,
+      batch_name = batch_name,
+      original_coefs = original_coefs,
+      permutation_coefs = permutation_coefs
+    )
+  }
+}
+
+
+
