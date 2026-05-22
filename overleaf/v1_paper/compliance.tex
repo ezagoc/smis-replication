@@ -1,0 +1,139 @@
+\section{Influencer compliance and follower interest in material}
+
+Influencer compliance with the intervention varied significantly across both countries and intervention phases. Notably, compliance was consistently higher in Kenya than in South Africa throughout all phases of the study. This discrepancy can be attributed to several factors, including the recruitment methods employed. In the first batch, influencers were recruited based on carefully curated criteria, resulting in higher compliance rates. In contrast, the second batch of influencers, recruited by Africa Check through Twitter ads, exhibited lower compliance. This distinction highlights the importance of targeted recruitment strategies in ensuring active participation and engagement with intervention materials.
+
+
+Figure~\ref{fig:compliance_pooled} presents two bar plots: one for the extensive margin (share of influencers who posted at least one piece of intervention material) and one for the intensive margin (percentage of planned intervention Tweets actually posted) focusing only on the first and second batches. Overall across phases 1 and 2, the extensive margin was 77\%, indicating a high level of initial engagement from influencers. However, the intensive margin was lower at 65\%, reflecting that while many influencers posted at least once, fewer followed through with all planned Tweets. 
+
+Breaking down the data further, Figure~\ref{fig:compliance_pooled_country} shows the compliance metrics by country for the first and second batches combined. In Kenya, the extensive margin was impressively high at 93\%, while the intensive margin was 82\%. This suggests that Kenyan influencers not only engaged initially but also maintained a relatively high level of continued participation. In South Africa, the extensive margin was 82\%, but the intensive margin dropped significantly to 45\%. This indicates that while many South African influencers initially engaged with the intervention, fewer sustained their activity throughout the study period.
+
+
+\begin{figure}[!htpb]
+	\centering
+	\caption{Tweet Compliance in \#FactsMatter Campaigns}
+	\includegraphics[width=14.3cm]{Plots/plots_gates_report/compliance_1st_2nd.png}
+	\label{fig:compliance_smi}
+        \floatfoot{\textit{Notes:} Percentage of the actually posted, relative to the planned, intervention Tweets.}
+\end{figure}
+
+To further analyze compliance, we disaggregated the data by intervention phase and country. The bars to the left in figure~\ref{fig:compliance_smi} show the extensive marging by intervention phase (first batch, and second batch) and country. 
+The lessons from the pilot let the fact checkers make several adjustments including creating WhatsApp distribution lists to have a better follow-up by Africa Check to influencers to remind them about the required intervention posts. This resulted in compliance of around 90\% in Kenya and 75\% in South Africa during the first batch. \footnote{Compliance during the pilot phase was around 60\% in Kenya and in South Africa.}
+
+In the second batch, we observe slightly higher compliance for Kenya, but around half of the compliance South Africa, relative to the first batch. The overall lower compliance is because influencers recruited through social media ads tend to exhibit lower compliance.
+
+In turn, the bars to the right in  Figure~\ref{fig:compliance_smi} show the intensive margin disaggregating the data by intervention phase and country. Naturally, compliance at the Twitter post level is lower but qualitatively in line with compliance at the social media influencer level. 
+
+
+Next, we turn to the social interactions with the intervention material distributed by SMIs, and the interactions with the identical material distributed via Twitter ads. Table~\ref{tab:smi_dl} shows the interactions with influencers' posts with digital literacy content, while Table~\ref{tab:smi_fc} shows the interactions with influencers' posts with fact checks for the first  and second batch only. Tables~\ref{tab:ads_fc} and \ref{tab:ads_dl} show analogous information for Twitter ads disseminating the same intervention information. The only difference across tables is that Table \ref{tab:ads_dl} shows the extent to which video ads, which were only used to disseminate digital literacy content were viewed. This is not available for fact checks because they were not distributed in video form, or for SMIs' posts disseminating disseminate digital literacy content since the API did not provide such information. 
+Tables ~\ref{tab:smi_dl_ap} to \ref{tab:ads_dl_ap} show the exactly the same information but for the pilot phase.
+
+\begin{figure}[!htpb]
+	\centering
+	\caption{Interactions with \#FactsMatter Campaign's posts }
+	\includegraphics[width=14.3cm]{Plots/plots_gates_report/pooled_interactions_100.png}
+	\label{fig:interactions_pooled}
+\end{figure}
+
+
+Results are quite compelling in terms of the relative effectiveness of Twitter ads vis-a-vis posts by social media influencers to generate impressions. Adding across all types of posts/ads and countries in the first and second batch, the total impressions of posts is 444,801, which pales relative to 2,611,954 impressions (5.87 times more) of ads. However, when turning to social media interactions (retweets, replies and likes), which are likely better predictors of information internalization this difference get erased and somewhat reverse. 
+As shown in Figure \ref{fig:interactions_pooled}, adding across all types of posts/ads and countries, the total interactions of posts is 5,147, while the total interactions of ads is 7,614. If we only consider retweets and replies, which involve a higher degree of interactivity than likes, we get 2,166 while for ads we only get 557.
+
+
+\begin{table}[h!]
+\centering
+\caption{Interactions with influencers's posts (Tweets with digital literacy content)}
+\label{tab:smi_dl}
+\begin{tabular}{lccccccc}
+  \hline
+ \bfseries{Country} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
+  \hline
+  Kenya & Retweets & 0 & 1 & 8 & 1.758 & 2.031 & 58\\
+ & Replies & 0 & 0 & 1 & 0.061 & 0.242 & 2\\ 
+ & Likes &  0 & 1 & 10 & 1.970 & 2.481 & 65\\ 
+ & Impressions &  0 & 88 & 219 & 88.684 & 56.116 & 1,685
+ \\\hline \\[-1.8ex] 
+ South Africa & Retweets & 0 & 0 & 9 & 1.6 & 2.64 & 24 \\ 
+ & Replies & 0 & 0 & 6 & 0.8 & 1.781 & 12\\ 
+ & Likes &  0 & 1 & 28 & 3.267 & 7.015 & 49\\ 
+ & Impressions & 0 & 799 & 9,269 & 1,697.889 & 2,914.46 & 15,281\\
+   \hline\\
+   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} Batch 1 and 2}} \\
+
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Interactions with influencers's posts (Tweets with fact checks)}
+\label{tab:smi_fc}
+\begin{tabular}{lccccccc}
+  \hline
+ \bfseries{Country} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
+  \hline
+  Kenya & Retweets & 0 & 1 & 72 & 3.587 & 10.823 & 165\\
+ & Replies & 0 & 0 & 1 & 0.043 & 0.206 & 2\\ 
+ & Likes &  0 & 1 & 16 & 2.283 & 3.857 & 105\\ 
+ & Impressions &  0 & 89 & 790 & 108.250 & 150.173 & 2,598
+ \\\hline \\[-1.8ex] 
+ South Africa & Retweets & 0 & 1 & 11 & 2.364 & 4.081 & 26 \\ 
+ & Replies & 0 & 1 & 4 & 1.091 & 1.375 & 12\\ 
+ & Likes &  0 & 2 & 7 & 2.636 & 2.378 & 29\\ 
+ & Impressions & 209 & 617 & 3,923 & 1,109.625 & 1,247.553 & 8,877\\
+   \hline\\
+   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} Batch 1 and 2}} \\
+
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[h!]
+\centering
+\caption{Interactions with Twitter ads (with digital literacy content)}
+\label{tab:ads_dl}
+\begin{tabular}{lccccccc}
+  \hline
+ \bfseries{Campaign} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
+  \hline
+  Kenya & Retweets & 1 & 6 & 56 & 9.625 & 13.942 & 154 \\ 
+ & Replies & 0 & 0 & 1 & 0.062 & 0.25 & 1\\ 
+ & Likes &  52 & 103.5 & 379 & 130.438 & 83.391 & 2,087\\ 
+ & Impressions &  24,011 & 35,854.5 & 80,792 & 49,570.25 & 24,372.731 & 793,124\\
+ & Video Views & 2,927 & 5,497 & 14,651 & 7,182.812 & 3,927.957 & 114,925
+ \\\hline \\[-1.8ex] 
+ South Africa & Retweets & 1 & 4 & 20 & 5.438 & 5.561 & 87 \\ 
+ & Replies & 0 & 0 & 1 & 0.125 & 0.342 & 2\\ 
+ & Likes &  2 & 28.5 & 123 & 39.312 & 28.175 & 629\\ 
+ & Impressions & 14,835 & 32,533 & 50,211 & 32,537.375 & 15,028.507 & 520,598\\
+ & Video Views & 1,963 & 4,507 & 10,541 & 5,307.062 & 2,882.342 & 84,913\\
+   \hline\\
+   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} For each country and for each audience -- First Batch and Second Batch, we posted 2 Ads weekly for an eight week period.}} \\
+
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[h!]
+\centering
+\caption{Interactions with Twitter ads (with fact checks)}
+\label{tab:ads_fc}
+\begin{tabular}{lccccccc}
+  \hline
+ \bfseries{Campaign} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
+  \hline
+  Kenya & Retweets & 3 & 10 & 39 & 13.812 & 10.284 & 221 \\ 
+ & Replies & 0 & 0 & 1 & 0.062 & 0.25 & 1\\ 
+ & Likes &  84 & 180 & 514 & 219.625 & 127.151 & 3,514\\ 
+ & Impressions &  15,723 & 38,551.5 & 83,913 & 48,371.75 & 26,267.246 & 773,948\\
+ \hline \\[-1.8ex] 
+ South Africa & Retweets & 0 & 3.5 & 18 & 5.5 & 5.228 & 88 \\ 
+ & Replies & 0 & 0 & 1  & 0.188 & 0.403 & 3\\ 
+ & Likes &  21 & 46 & 150 & 51.688 & 30.617 & 827\\ 
+ & Impressions & 15,559 & 30,939.5 & 51,161 & 32,767.75 & 15,111.554 & 524,284\\
+   \hline\\
+   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} For each country and for each audience -- First Batch and Second Batch, we posted 2 Ads weekly for an eight week period.}} \\
+
+\end{tabular}
+\end{table}
+
