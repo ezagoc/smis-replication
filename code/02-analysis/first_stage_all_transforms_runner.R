@@ -192,7 +192,7 @@ build_estimate_summary <- function(original_coefs, permutation_coefs, control_me
 }
 
 load_base_data <- function(batch_filter = NULL) {
-  belp90 <- read_parquet("../../data/analysis/joint/below_p90_p95_divider.parquet") |>
+  belp90 <- read_parquet("../../data/04-analysis/joint/below_p90_p95_divider.parquet") |>
     select(follower_id:percentile) |>
     select(-n_posts_base) |>
     distinct(follower_id, batch_id, pais, .keep_all = TRUE)
@@ -208,7 +208,7 @@ load_base_data <- function(batch_filter = NULL) {
   base_df <- get_analysis_ver_final_winsor(
     stage = stage,
     batches = "b1b2",
-    initial_path = "../../../../"
+    initial_path = "../../"
   ) |>
     filter(n_posts_base > n_posts_thr) |>
     left_join(df_s, by = "follower_id", relationship = "many-to-one") |>
@@ -289,7 +289,7 @@ for (batch_name in names(batch_specs)) {
 
     permuted_counts <- read_parquet(
       paste0(
-        "../../data/analysis/joint/small_ties_b1b2/small_tie",
+        "../../data/04-analysis/joint/small_ties_b1b2/small_tie",
         i,
         ".parquet"
       )

@@ -1,4 +1,4 @@
-﻿# 0.0 Set up the environment, clean it and set working directory to the code path
+# 0.0 Set up the environment, clean it and set working directory to the code path
 rm(list = ls())
 rstudioapi::getActiveDocumentContext
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -17,29 +17,88 @@ ipak(c("tidyverse", "readxl"))
 # 2.0 Paths
 results_root <- "../../results"
 replots_root <- file.path(results_root, "replots")
-combined_root <- file.path(replots_root, "combined")
 
 dir.create(replots_root, showWarnings = FALSE, recursive = TRUE)
-dir.create(combined_root, showWarnings = FALSE, recursive = TRUE)
 
-# 3.0 Helpers
+# 3.0 Labels and helpers
 label_map <- c(
-  ver = "Verifiable RTs + Posts",
-  non_ver = "Non-Verifiable RTs + Posts",
-  true = "True RTs + Posts",
-  fake = "Fake RTs + Posts",
-  n_posts = "Number of RTs + Posts",
-  eng = "Number of RTs + Posts (English)"
+  ver = "log Verifiable RTs + Posts",
+  non_ver = "log Non-Verifiable RTs + Posts",
+  true = "log True RTs + Posts",
+  fake = "log Fake RTs + Posts",
+  n_posts = "log Number of RTs + Posts",
+  eng = "log Number of RTs + Posts (English)",
+  n_posts_covid = "log COVID RTs + Posts",
+  pos_b_covid = "log Positive COVID RTs + Posts",
+  neutral_b_covid = "log Neutral COVID RTs + Posts",
+  neg_b_covid = "log Negative COVID RTs + Posts",
+  n_posts_vax = "log Vaccine RTs + Posts",
+  pos_b_vax = "log Positive Vaccine RTs + Posts",
+  neutral_b_vax = "log Neutral Vaccine RTs + Posts",
+  neg_b_vax = "log Negative Vaccine RTs + Posts",
+  log_total_shares = "log Total Shares",
+  log_total_comments = "log Total Comments",
+  log_total_reactions = "log Total Reactions",
+  log_verifiability = "log Verifiable Posts + Shares",
+  log_non_ver = "log Non Verifiable Posts + Shares",
+  log_true = "log True Posts + Shares",
+  log_fake = "log Fake Posts + Shares",
+  log_n_posts = "log Number of Posts + Shares",
+  log_eng = "log Number of Posts + Shares (English)",
+  log_pos_b_covid = "log Positive COVID Posts + Shares",
+  log_neutral_b_covid = "log Neutral COVID Posts + Shares",
+  log_neg_b_covid = "log Negative COVID Posts + Shares",
+  log_n_posts_covid = "log COVID Posts + Shares",
+  log_pos_b_vax = "log Positive Vaccine Posts + Shares",
+  log_neutral_b_vax = "log Neutral Vaccine Posts + Shares",
+  log_neg_b_vax = "log Negative Vaccine Posts + Shares",
+  log_n_posts_vax = "log Vaccine Posts + Shares"
+)
+
+horizontal_order <- c(
+  "n_posts",
+  "eng",
+  "ver",
+  "non_ver",
+  "true",
+  "fake",
+  "n_posts_covid",
+  "pos_b_covid",
+  "neutral_b_covid",
+  "neg_b_covid",
+  "n_posts_vax",
+  "pos_b_vax",
+  "neutral_b_vax",
+  "neg_b_vax",
+  "log_total_shares",
+  "log_total_comments",
+  "log_total_reactions",
+  "log_n_posts",
+  "log_eng",
+  "log_verifiability",
+  "log_non_ver",
+  "log_true",
+  "log_fake",
+  "log_n_posts_covid",
+  "log_pos_b_covid",
+  "log_neutral_b_covid",
+  "log_neg_b_covid",
+  "log_n_posts_vax",
+  "log_pos_b_vax",
+  "log_neutral_b_vax",
+  "log_neg_b_vax"
 )
 
 stage_label_map <- c(
-  fake = "Fake Posts + Shares",
-  true = "True Posts + Shares",
-  ver = "Verifiable Posts + Shares",
-  non_ver = "Non Verifiable Posts + Shares",
-  n_posts = "Number of Posts + Shares",
-  eng = "Number of Posts + Shares (English)"
+  fake = "log Fake Posts + Shares",
+  true = "log True Posts + Shares",
+  ver = "log Verifiable Posts + Shares",
+  non_ver = "log Non Verifiable Posts + Shares",
+  n_posts = "log Number of Posts + Shares",
+  eng = "log Number of Posts + Shares (English)"
 )
+
+stage_order <- c("n_posts", "eng", "ver", "non_ver", "true", "fake")
 
 stage_map <- c(
   stage1_2 = "Weeks 1-4",
@@ -47,16 +106,17 @@ stage_map <- c(
   stage5_6 = "Weeks 9-12"
 )
 
-addon_from_name <- function(filename) {
-  if (startsWith(filename, "log_")) {
-    return("log ")
+axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
+  lo <- min(lower, na.rm = TRUE)
+  hi <- max(upper, na.rm = TRUE)
+  span <- hi - lo
+
+  if (!is.finite(span) || span <= 0) {
+    span <- 0
   }
 
-  if (startsWith(filename, "arc_")) {
-    return("arcsinh ")
-  }
-
-  ""
+  pad <- max(span * pad_fraction, min_pad)
+  c(lo - pad, hi + pad)
 }
 
 batch_from_name <- function(filename) {
@@ -75,19 +135,6 @@ batch_from_name <- function(filename) {
   NA_character_
 }
 
-axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
-  lo <- min(lower, na.rm = TRUE)
-  hi <- max(upper, na.rm = TRUE)
-  span <- hi - lo
-
-  if (!is.finite(span) || span <= 0) {
-    span <- 0
-  }
-
-  pad <- max(span * pad_fraction, min_pad)
-  c(lo - pad, hi + pad)
-}
-
 read_excel_short_path <- function(path) {
   short_copy <- tempfile(pattern = "xlsx_", tmpdir = tempdir(), fileext = ".xlsx")
   on.exit(unlink(short_copy), add = TRUE)
@@ -95,61 +142,58 @@ read_excel_short_path <- function(path) {
   readxl::read_excel(short_copy)
 }
 
-ordered_labels <- function(vars, addon) {
-  base_order <- c("fake", "true", "ver", "non_ver", "eng", "n_posts")
-  base_order <- base_order[base_order %in% vars]
-  paste0(addon, unname(label_map[base_order]))
+resolve_label <- function(var_name, default_label = NULL) {
+  if (!is.na(var_name) && var_name %in% names(label_map)) {
+    return(unname(label_map[var_name]))
+  }
+
+  if (!is.null(default_label) && !is.na(default_label) && nzchar(default_label)) {
+    return(default_label)
+  }
+
+  gsub("_", " ", var_name)
 }
 
-ordered_stage_labels <- function(vars, addon) {
-  base_order <- c("n_posts", "non_ver", "ver", "true", "fake", "eng")
-  base_order <- base_order[base_order %in% vars]
-  paste0(addon, unname(stage_label_map[base_order]))
+ordered_horizontal_labels <- function(vars) {
+  ordered <- horizontal_order[horizontal_order %in% vars]
+  ordered_labels <- unname(label_map[ordered])
+  extra_vars <- setdiff(vars, ordered)
+  extra_labels <- vapply(extra_vars, resolve_label, character(1))
+  c(ordered_labels, sort(extra_labels))
+}
+
+ordered_stage_labels <- function(vars) {
+  ordered <- stage_order[stage_order %in% vars]
+  ordered_labels <- unname(stage_label_map[ordered])
+  extra_vars <- setdiff(vars, ordered)
+  extra_labels <- vapply(
+    extra_vars,
+    function(x) if (x %in% names(stage_label_map)) unname(stage_label_map[x]) else gsub("_", " ", x),
+    character(1)
+  )
+  c(ordered_labels, sort(extra_labels))
 }
 
 build_horizontal_plot_data <- function(original_path, permutation_path) {
   original <- read_excel_short_path(original_path)
   permutation <- read_excel_short_path(permutation_path)
-  addon <- addon_from_name(basename(original_path))
 
   final <- original |>
     pivot_longer(cols = everything(), names_to = "var", values_to = "coef") |>
     left_join(
       permutation |>
-        summarise(across(everything(), sd, na.rm = TRUE)) |>
+        summarise(across(everything(), \(x) sd(x, na.rm = TRUE))) |>
         pivot_longer(cols = everything(), names_to = "var", values_to = "sd"),
       by = "var"
     ) |>
     mutate(
-      Variable = paste0(addon, unname(label_map[var]))
+      Variable = vapply(var, resolve_label, character(1)),
+      lower = coef - 1.96 * sd,
+      upper = coef + 1.96 * sd
     )
 
-  final$Variable <- factor(
-    final$Variable,
-    levels = ordered_labels(final$var, addon)
-  )
-
+  final$Variable <- factor(final$Variable, levels = ordered_horizontal_labels(final$var))
   final
-}
-
-build_combined_horizontal_data <- function(original_dir, permutations_dir) {
-  original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
-
-  map_dfr(original_files, function(original_path) {
-    filename <- basename(original_path)
-    permutation_path <- file.path(permutations_dir, filename)
-
-    if (!file.exists(permutation_path)) {
-      return(tibble())
-    }
-
-    build_horizontal_plot_data(original_path, permutation_path) |>
-      mutate(
-        Batch = batch_from_name(filename),
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
-  })
 }
 
 plot_horizontal_family <- function(original_dir, permutations_dir, output_dir) {
@@ -169,23 +213,19 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir) {
       next
     }
 
-    final <- build_horizontal_plot_data(original_path, permutation_path) |>
-      mutate(
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
+    final <- build_horizontal_plot_data(original_path, permutation_path)
     x_bounds <- axis_bounds(final$lower, final$upper)
 
     results_plot <- ggplot(final, aes(y = Variable, x = coef)) +
       geom_point() +
-      geom_linerange(aes(xmin = lower, xmax = upper), size = 1) +
-      geom_vline(xintercept = 0, linetype = "solid", color = "black", size = 0.5) +
+      geom_linerange(aes(xmin = lower, xmax = upper), linewidth = 1) +
+      geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(xlim = x_bounds) +
       theme_bw() +
       xlab("Total Treated Estimate with 95% Confidence Interval") +
       ylab("Variable") +
       theme(
-        panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
+        panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank()
       )
 
@@ -193,383 +233,53 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir) {
       plot = results_plot,
       filename = file.path(output_dir, sub("\\.xlsx$", ".pdf", filename)),
       device = cairo_pdf,
-      width = 8.22,
-      height = 6.59,
+      width = 9.5,
+      height = 7.25,
       units = "in"
     )
   }
 }
 
-plot_combined_balance_family <- function(original_dir, permutations_dir, output_path, family_title) {
-  if (!dir.exists(original_dir) || !dir.exists(permutations_dir)) {
-    return(invisible(NULL))
-  }
+build_stage_plot_data <- function(estimate_path) {
+  final <- read_excel_short_path(estimate_path)
 
-  final <- build_combined_horizontal_data(original_dir, permutations_dir)
-
-  if (nrow(final) == 0) {
-    return(invisible(NULL))
-  }
-
-  final$Batch <- factor(final$Batch, levels = c("Batch 1", "Batch 2", "Both Batches"))
-  x_bounds <- axis_bounds(final$lower, final$upper)
-
-  results_plot <- ggplot(final, aes(y = Variable, x = coef)) +
-    geom_point() +
-    geom_linerange(aes(xmin = lower, xmax = upper), size = 1) +
-    geom_vline(xintercept = 0, linetype = "solid", color = "black", size = 0.5) +
-    coord_cartesian(xlim = x_bounds) +
-    facet_wrap(~Batch, nrow = 1) +
-    labs(
-      title = family_title,
-      x = "Total Treated Estimate with 95% Confidence Interval",
-      y = "Variable"
-    ) +
-    theme_bw() +
-    theme(
-      panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
-      panel.grid.minor = element_blank(),
-      plot.title = element_text(hjust = 0.5, face = "bold")
-    )
-
-  ggsave(
-    plot = results_plot,
-    filename = output_path,
-    device = cairo_pdf,
-    width = 12,
-    height = 6.59,
-    units = "in"
-  )
-}
-
-build_combined_stage_data <- function(estimates_dir) {
-  estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
-
-  map_dfr(estimate_files, function(estimate_path) {
-    filename <- basename(estimate_path)
-    addon <- addon_from_name(filename)
-    final <- read_excel_short_path(estimate_path)
-
-    if (!all(c("coef", "sd", "Stage", "Variable") %in% names(final))) {
-      return(tibble())
-    }
-
-    if ("stage" %in% names(final)) {
-      final <- final |>
-        mutate(Stage = recode(stage, !!!stage_map))
-    }
-
-    if ("var" %in% names(final)) {
-      final$Variable <- factor(final$Variable, levels = ordered_stage_labels(final$var, addon))
-    }
-
-    final |>
-      mutate(
-        Batch = batch_from_name(filename),
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
-  })
-}
-
-build_baseline_stage_data <- function(original_dir, permutations_dir) {
-  if (!dir.exists(original_dir) || !dir.exists(permutations_dir)) {
+  if (!all(c("coef", "sd", "Stage", "Variable") %in% names(final))) {
     return(tibble())
   }
 
-  original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
-
-  map_dfr(original_files, function(original_path) {
-    filename <- basename(original_path)
-    permutation_path <- file.path(permutations_dir, filename)
-
-    if (!file.exists(permutation_path)) {
-      return(tibble())
-    }
-
-    original <- read_excel_short_path(original_path)
-    permutation <- read_excel_short_path(permutation_path)
-    addon <- addon_from_name(filename)
-
-    original |>
-      pivot_longer(cols = everything(), names_to = "var", values_to = "coef") |>
-      filter(var %in% names(stage_label_map)) |>
-      left_join(
-        permutation |>
-          summarise(across(everything(), sd, na.rm = TRUE)) |>
-          pivot_longer(cols = everything(), names_to = "var", values_to = "sd"),
-        by = "var"
-      ) |>
-      mutate(
-        Stage = "Baseline",
-        Variable = paste0(addon, unname(stage_label_map[var])),
-        Batch = batch_from_name(filename),
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
-  })
-}
-
-build_stage_plus_baseline_data <- function(estimates_dir, baseline_original_dir, baseline_permutations_dir) {
-  stage_final <- build_combined_stage_data(estimates_dir)
-  baseline_final <- build_baseline_stage_data(baseline_original_dir, baseline_permutations_dir)
-
-  if (nrow(stage_final) == 0) {
-    return(tibble())
-  }
-
-  if (nrow(baseline_final) == 0) {
-    return(stage_final)
-  }
-
-  if ("var" %in% names(stage_final) && "var" %in% names(baseline_final)) {
-    common_vars <- intersect(unique(stage_final$var), unique(baseline_final$var))
-
-    if (length(common_vars) > 0) {
-      stage_final <- stage_final |>
-        filter(var %in% common_vars)
-      baseline_final <- baseline_final |>
-        filter(var %in% common_vars)
-    }
-  }
-
-  bind_rows(baseline_final, stage_final)
-}
-
-plot_combined_stage_plus_baseline_family <- function(
-  estimates_dir,
-  baseline_original_dir,
-  baseline_permutations_dir,
-  output_path,
-  family_title
-) {
-  final <- build_stage_plus_baseline_data(
-    estimates_dir = estimates_dir,
-    baseline_original_dir = baseline_original_dir,
-    baseline_permutations_dir = baseline_permutations_dir
-  )
-
-  if (nrow(final) == 0) {
-    return(invisible(NULL))
-  }
-
-  final$Batch <- factor(final$Batch, levels = c("Batch 1", "Batch 2", "Both Batches"))
-  final$Stage <- factor(final$Stage, levels = c("Baseline", unname(stage_map)))
-  y_bounds <- axis_bounds(final$lower, final$upper)
-
-  results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
-    geom_point(
-      aes(shape = Variable, color = Variable),
-      size = 3,
-      position = position_dodge(width = 0.5)
-    ) +
-    geom_linerange(
-      aes(ymin = lower, ymax = upper, color = Variable),
-      position = position_dodge(width = 0.5),
-      size = 1
-    ) +
-    scale_shape_manual(values = c(15, 16, 17, 4, 7, 18)[seq_along(levels(factor(final$Variable)))], name = "Outcome") +
-    scale_color_manual(values = rep("black", length(levels(factor(final$Variable)))), name = "Outcome") +
-    geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.5) +
-    coord_cartesian(ylim = y_bounds) +
-    facet_wrap(~Batch, nrow = 1) +
-    labs(
-      title = family_title,
-      y = "Total Treated Estimate with 95% Confidence Interval",
-      x = "Period"
-    ) +
-    theme_bw() +
-    theme(
-      panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
-      panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(hjust = 0.5, face = "bold")
-    )
-
-  ggsave(
-    plot = results_plot,
-    filename = output_path,
-    device = cairo_pdf,
-    width = 12,
-    height = 6.59,
-    units = "in"
-  )
-}
-
-plot_stage_estimates_with_baseline <- function(
-  estimates_dir,
-  baseline_original_dir,
-  baseline_permutations_dir,
-  output_dir
-) {
-  if (!dir.exists(estimates_dir) || !dir.exists(baseline_original_dir) || !dir.exists(baseline_permutations_dir)) {
-    return(invisible(NULL))
-  }
-
-  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-
-  estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
-  baseline_original_files <- list.files(baseline_original_dir, pattern = "\\.xlsx$", full.names = TRUE)
-
-  for (estimate_path in estimate_files) {
-    filename <- basename(estimate_path)
-    addon <- addon_from_name(filename)
-    batch_label <- batch_from_name(filename)
-
-    baseline_original_path <- baseline_original_files |>
-      keep(~ identical(batch_from_name(basename(.x)), batch_label)) |>
-      pluck(1, .default = NA_character_)
-
-    if (is.na(baseline_original_path)) {
-      next
-    }
-
-    baseline_permutation_path <- file.path(
-      baseline_permutations_dir,
-      basename(baseline_original_path)
-    )
-
-    if (!file.exists(baseline_permutation_path)) {
-      next
-    }
-
-    baseline_final <- build_baseline_stage_data(
-      original_dir = dirname(baseline_original_path),
-      permutations_dir = baseline_permutations_dir
-    ) |>
-      filter(Batch == batch_label)
-
-    final <- read_excel_short_path(estimate_path)
-
-    if (!all(c("coef", "sd", "Stage", "Variable") %in% names(final))) {
-      next
-    }
-
-    if ("stage" %in% names(final)) {
-      final <- final |>
-        mutate(Stage = recode(stage, !!!stage_map))
-    }
-
+  if ("stage" %in% names(final)) {
     final <- final |>
-      mutate(
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
+      mutate(Stage = recode(stage, !!!stage_map))
+  }
 
-    if ("var" %in% names(final) && "var" %in% names(baseline_final)) {
-      common_vars <- intersect(unique(final$var), unique(baseline_final$var))
-
-      if (length(common_vars) > 0) {
-        final <- final |>
-          filter(var %in% common_vars)
-        baseline_final <- baseline_final |>
-          filter(var %in% common_vars)
-      }
-    }
-
-    final <- bind_rows(baseline_final, final)
-    y_bounds <- axis_bounds(final$lower, final$upper)
-
-    if ("var" %in% names(final)) {
-      var_levels <- ordered_stage_labels(final$var, addon)
-    } else {
-      var_levels <- unique(final$Variable)
-    }
-
-    final$Variable <- factor(final$Variable, levels = var_levels)
-    final$Stage <- factor(final$Stage, levels = c("Baseline", unname(stage_map)))
-
-    results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
-      geom_point(
-        aes(shape = Variable, color = Variable),
-        size = 3,
-        position = position_dodge(width = 0.5)
-      ) +
-      geom_linerange(
-        aes(ymin = lower, ymax = upper, color = Variable),
-        position = position_dodge(width = 0.5),
-        size = 1
-      ) +
-      scale_shape_manual(values = c(15, 16, 17, 4, 7, 18)[seq_along(levels(final$Variable))], name = "Outcome") +
-      scale_color_manual(values = rep("black", length(levels(final$Variable))), name = "Outcome") +
-      geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.5) +
-      coord_cartesian(ylim = y_bounds) +
-      theme_bw() +
-      ylab("Total Treated Estimate with 95% Confidence Interval") +
-      xlab("Period") +
-      theme(
-        panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
-        panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)
-      )
-
-    ggsave(
-      plot = results_plot,
-      filename = file.path(output_dir, sub("_estimates\\.xlsx$", "_with_baseline.pdf", filename)),
-      device = cairo_pdf,
-      width = 8.22,
-      height = 6.59,
-      units = "in"
+  if ("var" %in% names(final)) {
+    final$Variable <- vapply(
+      seq_len(nrow(final)),
+      function(i) {
+        if (!is.na(final$var[[i]]) && final$var[[i]] %in% names(stage_label_map)) {
+          unname(stage_label_map[final$var[[i]]])
+        } else {
+          final$Variable[[i]]
+        }
+      },
+      character(1)
     )
   }
-}
 
-plot_combined_stage_family <- function(estimates_dir, output_path, family_title) {
-  if (!dir.exists(estimates_dir)) {
-    return(invisible(NULL))
+  final <- final |>
+    mutate(
+      lower = coef - 1.96 * sd,
+      upper = coef + 1.96 * sd
+    )
+
+  if ("var" %in% names(final)) {
+    final$Variable <- factor(final$Variable, levels = ordered_stage_labels(final$var))
+  } else {
+    final$Variable <- factor(final$Variable, levels = unique(final$Variable))
   }
 
-  final <- build_combined_stage_data(estimates_dir)
-
-  if (nrow(final) == 0) {
-    return(invisible(NULL))
-  }
-
-  final$Batch <- factor(final$Batch, levels = c("Batch 1", "Batch 2", "Both Batches"))
   final$Stage <- factor(final$Stage, levels = unname(stage_map))
-  y_bounds <- axis_bounds(final$lower, final$upper)
-
-  results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
-    geom_point(
-      aes(shape = Variable, color = Variable),
-      size = 3,
-      position = position_dodge(width = 0.5)
-    ) +
-    geom_linerange(
-      aes(
-        ymin = lower,
-        ymax = upper,
-        color = Variable
-      ),
-      position = position_dodge(width = 0.5),
-      size = 1
-    ) +
-    scale_shape_manual(values = c(15, 16, 17, 4, 7, 18)[seq_along(levels(factor(final$Variable)))], name = "Outcome") +
-    scale_color_manual(values = rep("black", length(levels(factor(final$Variable)))), name = "Outcome") +
-    geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.5) +
-    coord_cartesian(ylim = y_bounds) +
-    facet_wrap(~Batch, nrow = 1) +
-    labs(
-      title = family_title,
-      y = "Total Treated Estimate with 95% Confidence Interval",
-      x = "Stage"
-    ) +
-    theme_bw() +
-    theme(
-      panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
-      panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(hjust = 0.5, face = "bold")
-    )
-
-  ggsave(
-    plot = results_plot,
-    filename = output_path,
-    device = cairo_pdf,
-    width = 12,
-    height = 6.59,
-    units = "in"
-  )
+  final
 }
 
 plot_stage_estimates <- function(estimates_dir, output_dir) {
@@ -583,34 +293,15 @@ plot_stage_estimates <- function(estimates_dir, output_dir) {
 
   for (estimate_path in estimate_files) {
     filename <- basename(estimate_path)
-    addon <- addon_from_name(filename)
+    final <- build_stage_plot_data(estimate_path)
 
-    final <- read_excel_short_path(estimate_path)
-
-    if (!all(c("coef", "sd", "Stage", "Variable") %in% names(final))) {
+    if (nrow(final) == 0) {
       next
     }
 
-    if ("stage" %in% names(final)) {
-      final <- final |>
-        mutate(Stage = recode(stage, !!!stage_map))
-    }
-
-    final <- final |>
-      mutate(
-        lower = coef - 1.96 * sd,
-        upper = coef + 1.96 * sd
-      )
     y_bounds <- axis_bounds(final$lower, final$upper)
-
-    if ("var" %in% names(final)) {
-      var_levels <- ordered_stage_labels(final$var, addon)
-    } else {
-      var_levels <- unique(final$Variable)
-    }
-
-    final$Variable <- factor(final$Variable, levels = var_levels)
-    final$Stage <- factor(final$Stage, levels = unname(stage_map))
+    shape_values <- c(15, 16, 17, 18, 3, 7, 8, 0)
+    n_vars <- nlevels(final$Variable)
 
     results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
       geom_point(
@@ -619,23 +310,19 @@ plot_stage_estimates <- function(estimates_dir, output_dir) {
         position = position_dodge(width = 0.5)
       ) +
       geom_linerange(
-        aes(
-          ymin = lower,
-          ymax = upper,
-          color = Variable
-        ),
+        aes(ymin = lower, ymax = upper, color = Variable),
         position = position_dodge(width = 0.5),
-        size = 1
+        linewidth = 1
       ) +
-      scale_shape_manual(values = c(15, 16, 17, 4, 7, 18)[seq_along(levels(final$Variable))], name = "Outcome") +
-      scale_color_manual(values = rep("black", length(levels(final$Variable))), name = "Outcome") +
-      geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.5) +
+      scale_shape_manual(values = shape_values[seq_len(n_vars)], name = "Outcome") +
+      scale_color_manual(values = rep("black", n_vars), name = "Outcome") +
+      geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(ylim = y_bounds) +
       theme_bw() +
       ylab("Total Treated Estimate with 95% Confidence Interval") +
-      xlab("Stage") +
+      xlab("Period") +
       theme(
-        panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
+        panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank(),
         axis.text.x = element_text(angle = 45, hjust = 1)
       )
@@ -644,14 +331,14 @@ plot_stage_estimates <- function(estimates_dir, output_dir) {
       plot = results_plot,
       filename = file.path(output_dir, sub("_estimates\\.xlsx$", ".pdf", filename)),
       device = cairo_pdf,
-      width = 8.22,
-      height = 6.59,
+      width = 9.5,
+      height = 7.25,
       units = "in"
     )
   }
 }
 
-# 4.0 Rebuild plots from saved results only
+# 4.0 Rebuild paper-facing plots from saved results only
 plot_horizontal_family(
   original_dir = file.path(results_root, "original"),
   permutations_dir = file.path(results_root, "permutations"),
@@ -676,88 +363,28 @@ plot_horizontal_family(
   output_dir = file.path(replots_root, "intensive_baseline_weighted_strong")
 )
 
-plot_combined_balance_family(
-  original_dir = file.path(results_root, "original"),
-  permutations_dir = file.path(results_root, "permutations"),
-  output_path = file.path(combined_root, "extensive_balance_batches.pdf"),
-  family_title = "Extensive Balance"
+plot_horizontal_family(
+  original_dir = file.path(results_root, "extensive_aggregate_batches", "original"),
+  permutations_dir = file.path(results_root, "extensive_aggregate_batches", "permutations"),
+  output_dir = file.path(replots_root, "extensive_aggregate_batches")
 )
 
-plot_combined_balance_family(
-  original_dir = file.path(results_root, "strong", "original"),
-  permutations_dir = file.path(results_root, "strong", "permutations"),
-  output_path = file.path(combined_root, "extensive_balance_strong_batches.pdf"),
-  family_title = "Extensive Balance Strong"
+plot_horizontal_family(
+  original_dir = file.path(results_root, "extensive_aggregate_batches_strong", "original"),
+  permutations_dir = file.path(results_root, "extensive_aggregate_batches_strong", "permutations"),
+  output_dir = file.path(replots_root, "extensive_aggregate_batches_strong")
 )
 
-plot_combined_balance_family(
-  original_dir = file.path(results_root, "intensive_baseline_weighted", "original"),
-  permutations_dir = file.path(results_root, "intensive_baseline_weighted", "permutations"),
-  output_path = file.path(combined_root, "intensive_balance_batches.pdf"),
-  family_title = "Intensive Balance"
+plot_horizontal_family(
+  original_dir = file.path(results_root, "intensive_aggregate_batches", "original"),
+  permutations_dir = file.path(results_root, "intensive_aggregate_batches", "permutations"),
+  output_dir = file.path(replots_root, "intensive_aggregate_batches")
 )
 
-plot_combined_balance_family(
-  original_dir = file.path(results_root, "intensive_baseline_weighted_strong", "original"),
-  permutations_dir = file.path(results_root, "intensive_baseline_weighted_strong", "permutations"),
-  output_path = file.path(combined_root, "intensive_balance_strong_batches.pdf"),
-  family_title = "Intensive Balance Strong"
-)
-
-plot_combined_stage_family(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5", "estimates"),
-  output_path = file.path(combined_root, "extensive_stages_batches.pdf"),
-  family_title = "Extensive Stages"
-)
-
-plot_combined_stage_plus_baseline_family(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5", "estimates"),
-  baseline_original_dir = file.path(results_root, "original"),
-  baseline_permutations_dir = file.path(results_root, "permutations"),
-  output_path = file.path(combined_root, "extensive_stages_with_baseline_batches.pdf"),
-  family_title = "Extensive Baseline and Endline"
-)
-
-plot_combined_stage_family(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5_strong", "estimates"),
-  output_path = file.path(combined_root, "extensive_stages_strong_batches.pdf"),
-  family_title = "Extensive Stages Strong"
-)
-
-plot_combined_stage_plus_baseline_family(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5_strong", "estimates"),
-  baseline_original_dir = file.path(results_root, "strong", "original"),
-  baseline_permutations_dir = file.path(results_root, "strong", "permutations"),
-  output_path = file.path(combined_root, "extensive_stages_strong_with_baseline_batches.pdf"),
-  family_title = "Extensive Baseline and Endline Strong"
-)
-
-plot_combined_stage_family(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted", "estimates"),
-  output_path = file.path(combined_root, "intensive_stages_batches.pdf"),
-  family_title = "Intensive Stages"
-)
-
-plot_combined_stage_plus_baseline_family(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted", "estimates"),
-  baseline_original_dir = file.path(results_root, "intensive_baseline_weighted", "original"),
-  baseline_permutations_dir = file.path(results_root, "intensive_baseline_weighted", "permutations"),
-  output_path = file.path(combined_root, "intensive_stages_with_baseline_batches.pdf"),
-  family_title = "Intensive Baseline and Endline"
-)
-
-plot_combined_stage_family(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted_strong", "estimates"),
-  output_path = file.path(combined_root, "intensive_stages_strong_batches.pdf"),
-  family_title = "Intensive Stages Strong"
-)
-
-plot_combined_stage_plus_baseline_family(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted_strong", "estimates"),
-  baseline_original_dir = file.path(results_root, "intensive_baseline_weighted_strong", "original"),
-  baseline_permutations_dir = file.path(results_root, "intensive_baseline_weighted_strong", "permutations"),
-  output_path = file.path(combined_root, "intensive_stages_strong_with_baseline_batches.pdf"),
-  family_title = "Intensive Baseline and Endline Strong"
+plot_horizontal_family(
+  original_dir = file.path(results_root, "intensive_aggregate_batches_strong", "original"),
+  permutations_dir = file.path(results_root, "intensive_aggregate_batches_strong", "permutations"),
+  output_dir = file.path(replots_root, "intensive_aggregate_batches_strong")
 )
 
 plot_stage_estimates(
@@ -765,23 +392,9 @@ plot_stage_estimates(
   output_dir = file.path(replots_root, "extensive_linear_90p_p5")
 )
 
-plot_stage_estimates_with_baseline(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5", "estimates"),
-  baseline_original_dir = file.path(results_root, "original"),
-  baseline_permutations_dir = file.path(results_root, "permutations"),
-  output_dir = file.path(replots_root, "extensive_linear_90p_p5_with_baseline")
-)
-
 plot_stage_estimates(
   estimates_dir = file.path(results_root, "extensive_linear_90p_p5_strong", "estimates"),
   output_dir = file.path(replots_root, "extensive_linear_90p_p5_strong")
-)
-
-plot_stage_estimates_with_baseline(
-  estimates_dir = file.path(results_root, "extensive_linear_90p_p5_strong", "estimates"),
-  baseline_original_dir = file.path(results_root, "strong", "original"),
-  baseline_permutations_dir = file.path(results_root, "strong", "permutations"),
-  output_dir = file.path(replots_root, "extensive_linear_90p_p5_strong_with_baseline")
 )
 
 plot_stage_estimates(
@@ -789,22 +402,7 @@ plot_stage_estimates(
   output_dir = file.path(replots_root, "intensive_linear_95p_weighted")
 )
 
-plot_stage_estimates_with_baseline(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted", "estimates"),
-  baseline_original_dir = file.path(results_root, "intensive_baseline_weighted", "original"),
-  baseline_permutations_dir = file.path(results_root, "intensive_baseline_weighted", "permutations"),
-  output_dir = file.path(replots_root, "intensive_linear_95p_weighted_with_baseline")
-)
-
 plot_stage_estimates(
   estimates_dir = file.path(results_root, "intensive_linear_95p_weighted_strong", "estimates"),
   output_dir = file.path(replots_root, "intensive_linear_95p_weighted_strong")
 )
-
-plot_stage_estimates_with_baseline(
-  estimates_dir = file.path(results_root, "intensive_linear_95p_weighted_strong", "estimates"),
-  baseline_original_dir = file.path(results_root, "intensive_baseline_weighted_strong", "original"),
-  baseline_permutations_dir = file.path(results_root, "intensive_baseline_weighted_strong", "permutations"),
-  output_dir = file.path(replots_root, "intensive_linear_95p_weighted_strong_with_baseline")
-)
-

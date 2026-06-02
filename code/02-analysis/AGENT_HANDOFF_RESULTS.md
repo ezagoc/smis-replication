@@ -7,11 +7,11 @@ This handoff covers only the `FinalTests` results scripts copied into `code/02-a
 ## What was changed
 
 - Repointed shared utility imports from `../../../../src/utils/` to `../../src/utils/`.
-- Repointed analysis data reads from `../../../../data/04-analysis/` to `../../data/analysis/`.
+- Repointed analysis data reads into the repo-local `../../data/04-analysis/` tree.
 - Repointed first-stage extra inputs from `../../../../data/06-other/` to `../../data/others/`.
 - Repointed modern output roots from `results` to `../../results`.
 - Repointed permutation draws from `small_ties_b1b2p` to `small_ties_b1b2`.
-- Repointed the attrition lookup to `../../data/analysis/attrition.parquet`.
+- Repointed the attrition lookup to `../../data/04-analysis/attrition.parquet`.
 - Repointed first-stage retweet counts to `../../data/others/RTs_counts_smi.parquet` and `../../data/others/RTs_counts_ads.parquet`.
 - Added folder documentation in `code/02-analysis/README.md`.
 - Added repo-root `.gitignore` to ignore all data.
@@ -43,10 +43,10 @@ Legacy scripts were also repointed at the root level:
 
 The checked path dependencies that had been missing earlier are now present in the repo, including:
 
-- `data/analysis/attrition.parquet`
-- `data/analysis/KE/baseline/baseline_divided_b1b2.parquet`
-- `data/analysis/KE/baseline/baseline_english_divided_b1b2.parquet`
-- `data/analysis/joint/BlocksIntensive/original/intensive_fe.parquet`
+- `data/04-analysis/attrition.parquet`
+- `data/04-analysis/KE/baseline/baseline_divided_b1b2.parquet`
+- `data/04-analysis/KE/baseline/baseline_english_divided_b1b2.parquet`
+- `data/04-analysis/joint/BlocksIntensive/original/intensive_fe.parquet`
 - `data/others/RTs_counts_smi.parquet`
 - `data/others/RTs_counts_ads.parquet`
 

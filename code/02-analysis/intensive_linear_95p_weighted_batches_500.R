@@ -24,7 +24,8 @@ list_types <- c("log_")
 file_stub <- "intensive_linear_95p_weighted"
 influencer_thr <- 9
 n_posts_thr <- 0
-n_permutations <- 500
+n_permutations <- 1000
+permutation_suffix <- paste0("_", n_permutations, "perm")
 
 results_root <- file.path("../../results", "intensive_linear_95p_weighted")
 original_dir <- file.path(results_root, "original")
@@ -144,7 +145,7 @@ summarise_stage_results <- function(original_coefs, permutation_coefs, stage, ty
 }
 
 write_outputs <- function(type, batch_name, stage, original_coefs, permutation_coefs) {
-  file_code <- paste0(type, file_stub, "_", batch_name, "_", stage, "_500perm")
+  file_code <- paste0(type, file_stub, "_", batch_name, "_", stage, permutation_suffix)
 
   write_xlsx(
     original_coefs,
@@ -158,7 +159,7 @@ write_outputs <- function(type, batch_name, stage, original_coefs, permutation_c
 }
 
 # 3.0 Load shared filters
-belp90 <- read_parquet("../../data/analysis/joint/below_p90_p95_divider.parquet") |>
+belp90 <- read_parquet("../../data/04-analysis/joint/below_p90_p95_divider.parquet") |>
   select(-n_posts_base)
 
 # 4.0 Run the specification for each batch sample and stage
@@ -177,7 +178,7 @@ for (type in list_types) {
       base_df <- get_analysis_ver_final_winsor(
         stage = stage,
         batches = "b1b2",
-        initial_path = "../../../../"
+        initial_path = "../../"
       ) |>
         left_join(belp90, by = c("follower_id", "batch_id", "pais")) |>
         filter(below_p90 == 1) |>
@@ -213,7 +214,7 @@ for (type in list_types) {
 
         permuted_counts <- read_parquet(
           paste0(
-            "../../data/analysis/joint/small_ties_b1b2/small_tie",
+            "../../data/04-analysis/joint/small_ties_b1b2/small_tie",
             i,
             ".parquet"
           )
@@ -277,7 +278,7 @@ for (type in list_types) {
       final,
       file.path(
         estimates_dir,
-        paste0(type, file_stub, "_", batch_name, "_500perm_estimates.xlsx")
+        paste0(type, file_stub, "_", batch_name, permutation_suffix, "_estimates.xlsx")
       )
     )
 
@@ -312,7 +313,7 @@ for (type in list_types) {
       plot = results_plot,
       filename = file.path(
         plots_dir,
-        paste0(type, file_stub, "_", batch_name, "_500perm.pdf")
+        paste0(type, file_stub, "_", batch_name, permutation_suffix, ".pdf")
       ),
       device = cairo_pdf,
       width = 8.22,

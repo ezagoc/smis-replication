@@ -8,7 +8,7 @@ These scripts now assume the replication-repo layout:
 
 - code: `code/02-analysis`
 - shared R utilities: `src/utils`
-- analysis data: `data/analysis`
+- analysis data: `data/04-analysis`
 - additional first-stage inputs: `data/others`
 - outputs: `results`
 
@@ -53,10 +53,10 @@ Legacy scripts retained in this folder:
 
 The checked path dependencies for the main results families are now present in the replication repo, including:
 
-- `data/analysis/attrition.parquet`
-- `data/analysis/KE/baseline/baseline_divided_b1b2.parquet`
-- `data/analysis/KE/baseline/baseline_english_divided_b1b2.parquet`
-- `data/analysis/joint/BlocksIntensive/original/intensive_fe.parquet`
+- `data/04-analysis/attrition.parquet`
+- `data/04-analysis/KE/baseline/baseline_divided_b1b2.parquet`
+- `data/04-analysis/KE/baseline/baseline_english_divided_b1b2.parquet`
+- `data/04-analysis/joint/BlocksIntensive/original/intensive_fe.parquet`
 - `data/others/RTs_counts_smi.parquet`
 - `data/others/RTs_counts_ads.parquet`
 
@@ -64,7 +64,7 @@ So the folder now looks aligned from a path and file-presence perspective for bo
 
 ## Notes
 
-- The permutation scripts point to `data/analysis/joint/small_ties_b1b2/`.
+- The permutation scripts point to `data/04-analysis/joint/small_ties_b1b2/`.
 - The first-stage scripts read `RTs_counts_smi.parquet` and `RTs_counts_ads.parquet` from `data/others/`.
 - Existing outputs are expected under `results/` with the same subfolder structure already copied into the repo.
 - The remaining step is execution verification in R.

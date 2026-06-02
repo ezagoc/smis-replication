@@ -100,7 +100,7 @@ prepare_batch_data <- function(data, batch_filter = NULL) {
 build_control_mean_table <- function(batch_code) {
   batch_filter <- if (batch_code == "both") NULL else batch_code
 
-  belp90 <- read_parquet("../../data/analysis/joint/below_p90_p95_divider.parquet") |>
+  belp90 <- read_parquet("../../data/04-analysis/joint/below_p90_p95_divider.parquet") |>
     select(follower_id:percentile) |>
     select(-n_posts_base) |>
     distinct(follower_id, batch_id, pais, .keep_all = TRUE)
@@ -116,7 +116,7 @@ build_control_mean_table <- function(batch_code) {
   base_df <- get_analysis_ver_final_winsor(
     stage = stage,
     batches = "b1b2",
-    initial_path = "../../../../"
+    initial_path = "../../"
   ) |>
     filter(n_posts_base > n_posts_thr) |>
     left_join(df_s, by = "follower_id", relationship = "many-to-one") |>

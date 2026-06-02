@@ -1,28 +1,38 @@
 \section{Results}
 \label{sec:results}
 
-In the main text, we focus on the first batch. Additional results for Batch 2, both batches combined, and the intensive-margin specifications are presented in Appendix~\ref{app:results_appendix}.
+In the main text, we focus on the first batch and the aggregate treatment-period effects. Additional stage-by-stage results, baseline balance-style results, and the corresponding Batch 2 and pooled-batch estimates are presented in Appendix~\ref{app:results_appendix}.
 
 \subsection{First Stage: Batch 1}
 
 \input{../results/first_stage_extensive_all_transforms/tables/first_stage_extensive_all_transforms_b1.tex}
 
-\subsection{Null Effects on Extensive Outcomes: Batch 1}
+\subsection{Aggregate Extensive Outcomes: Batch 1}
 
 \begin{figure}[!htbp]
     \centering
-    \caption{Extensive Outcomes: Baseline and Endline Effects, Batch 1}
-    \includegraphics[width=\textwidth]{../results/replots/extensive_linear_90p_p5_with_baseline/log_extensive_verifiability_fes_normal_p90_p5_b1_500perm_with_baseline.pdf}
-    \label{fig:extensive_b1_baseline_endline}
-    \floatfoot{\textit{Notes:} The figure reports the estimated effect of treatment for the Batch 1 sample, combining the baseline specification with the endline specifications for Weeks 1--4, Weeks 5--8, and Weeks 9--12. Whiskers denote permutation-based 95\% confidence intervals.}
+    \caption{Extensive Outcomes: Aggregated Treatment-Period Effects, Batch 1}
+    \includegraphics[width=\textwidth]{../results/replots/extensive_aggregate_batches/log_extensive_aggregate_batches_b1_1000perm.pdf}
+    \label{fig:extensive_b1_aggregate}
+    \floatfoot{\textit{Notes:} The figure reports the estimated effect of treatment for the Batch 1 extensive-margin sample after aggregating outcomes across the full treatment period, Weeks 1--12. Whiskers denote permutation-based 95\% confidence intervals.}
 \end{figure}
 
-\subsection{Robustness: Strong Followers Only, Batch 1}
+\subsection{Aggregate Extensive Outcomes, Strong-Follower Sample: Batch 1}
 
 \begin{figure}[!htbp]
     \centering
-    \caption{Extensive Outcomes: Baseline and Endline Effects, Strong-Follower Sample, Batch 1}
-    \includegraphics[width=\textwidth]{../results/replots/extensive_linear_90p_p5_strong_with_baseline/log_extensive_verifiability_fes_normal_p90_p5_strong_b1_500perm_with_baseline.pdf}
-    \label{fig:extensive_strong_b1_baseline_endline}
-    \floatfoot{\textit{Notes:} The figure reports the estimated effect of treatment for the Batch 1 sample restricted to followers with at least one strong treated connection. Whiskers denote permutation-based 95\% confidence intervals.}
+    \caption{Extensive Outcomes: Aggregated Treatment-Period Effects, Strong-Follower Sample, Batch 1}
+    \includegraphics[width=\textwidth]{../results/replots/extensive_aggregate_batches_strong/log_extensive_aggregate_batches_strong_b1_1000perm.pdf}
+    \label{fig:extensive_strong_b1_aggregate}
+    \floatfoot{\textit{Notes:} The figure reports the estimated effect of treatment for the Batch 1 sample restricted to followers with at least one strong treated connection, after aggregating outcomes across Weeks 1--12. Whiskers denote permutation-based 95\% confidence intervals.}
+\end{figure}
+
+\subsection{Aggregate Intensive Outcomes: Batch 1}
+
+\begin{figure}[!htbp]
+    \centering
+    \caption{Intensive Outcomes: Aggregated Treatment-Period Effects, Batch 1}
+    \includegraphics[width=\textwidth]{../results/replots/intensive_aggregate_batches/log_intensive_aggregate_batches_b1_1000perm.pdf}
+    \label{fig:intensive_b1_aggregate}
+    \floatfoot{\textit{Notes:} The figure reports the estimated effect of treatment for the Batch 1 intensive-margin sample after aggregating outcomes across Weeks 1--12. Whiskers denote permutation-based 95\% confidence intervals.}
 \end{figure}
