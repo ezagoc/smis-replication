@@ -6,7 +6,7 @@ This folder contains the copied `FinalTests` results scripts for the replication
 
 These scripts now assume the replication-repo layout:
 
-- code: `code/02-analysis`
+- code: `code/02-analysis` with `analysis`, `graphs`, and `pre-process` subfolders
 - shared R utilities: `src/utils`
 - analysis data: `data/04-analysis`
 - additional first-stage inputs: `data/others`
@@ -18,29 +18,35 @@ All paths were updated by changing literals only. The code structure and run log
 
 Main extensive and intensive results:
 
-1. `extensive_fes_batches_500.R`
-2. `extensive_fes_batches_500_strong.R`
-3. `extensive_linear_90p_p5.R`
-4. `extensive_linear_90p_p5_strong.R`
-5. `intensive_baseline_weighted_batches_500.R`
-6. `intensive_baseline_weighted_batches_500_strong.R`
-7. `intensive_linear_95p_weighted_batches_500.R`
-8. `intensive_linear_95p_weighted_batches_500_strong.R`
+1. `analysis/extensive_fes_batches_500.R`
+2. `analysis/extensive_fes_batches_500_strong.R`
+3. `analysis/extensive_linear_90p_p5.R`
+4. `analysis/extensive_linear_90p_p5_strong.R`
+5. `analysis/intensive_baseline_weighted_batches_500.R`
+6. `analysis/intensive_baseline_weighted_batches_500_strong.R`
+7. `analysis/intensive_linear_95p_weighted_batches_500.R`
+8. `analysis/intensive_linear_95p_weighted_batches_500_strong.R`
 
 First-stage wrappers:
 
-1. `first_stage_extensive_all_transforms.R`
-2. `first_stage_extensive_all_transforms_strong.R`
-3. `first_stage_intensive_all_transforms.R`
-4. `first_stage_intensive_all_transforms_strong.R`
-5. `first_stage_extensive_all_transforms_tables.R`
-6. `first_stage_extensive_all_transforms_strong_tables.R`
-7. `first_stage_intensive_all_transforms_tables.R`
-8. `first_stage_intensive_all_transforms_strong_tables.R`
+1. `analysis/first_stage_extensive_all_transforms.R`
+2. `analysis/first_stage_extensive_all_transforms_strong.R`
+3. `analysis/first_stage_intensive_all_transforms.R`
+4. `analysis/first_stage_intensive_all_transforms_strong.R`
+5. `analysis/first_stage_extensive_all_transforms_tables.R`
+6. `analysis/first_stage_extensive_all_transforms_strong_tables.R`
+7. `analysis/first_stage_intensive_all_transforms_tables.R`
+8. `analysis/first_stage_intensive_all_transforms_strong_tables.R`
 
 Saved-results rebuild:
 
-1. `plot_saved_results_only.R`
+1. `graphs/plot_saved_results_only.R`
+
+Pre-processing helpers:
+
+- `pre-process/aggregate_batches.R`
+- `pre-process/aggregate_batches_intensive.R`
+- `pre-process/inspect_stage1_2_varnames.R`
 
 Legacy scripts retained in this folder:
 

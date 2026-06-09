@@ -2,7 +2,7 @@
 
 ## Scope
 
-This handoff covers only the `FinalTests` results scripts copied into `code/02-analysis` of the replication repo.
+This handoff covers only the `FinalTests` results scripts copied into `code/02-analysis` of the replication repo and organized into `analysis`, `graphs`, and `pre-process` subfolders.
 
 ## What was changed
 
@@ -18,7 +18,7 @@ This handoff covers only the `FinalTests` results scripts copied into `code/02-a
 
 ## Files updated
 
-Main path updates were applied across the `.R` files in `code/02-analysis`, especially:
+Main path updates were applied across the `.R` files in `code/02-analysis/analysis`, with plotting scripts now in `code/02-analysis/graphs` and aggregation builders in `code/02-analysis/pre-process`, especially:
 
 - `extensive_fes_batches_500.R`
 - `extensive_fes_batches_500_strong.R`
@@ -30,7 +30,7 @@ Main path updates were applied across the `.R` files in `code/02-analysis`, espe
 - `intensive_baseline_weighted_batches_500_strong.R`
 - `intensive_linear_95p_weighted_batches_500.R`
 - `intensive_linear_95p_weighted_batches_500_strong.R`
-- `plot_saved_results_only.R`
+- `graphs/plot_saved_results_only.R`
 
 Legacy scripts were also repointed at the root level:
 
@@ -55,3 +55,5 @@ So the results folder is now aligned from a path and file-presence perspective. 
 ## Suggested next step
 
 Run the modern script families first, then use the legacy scripts only if they are still needed for the replication package.
+
+
