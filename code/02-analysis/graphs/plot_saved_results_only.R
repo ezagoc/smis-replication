@@ -38,6 +38,9 @@ dir.create(combined_root, showWarnings = FALSE, recursive = TRUE)
 label_map <- c(
   AC = "Follows Africa Check",
   SMIs = "Number of SMIs Followed",
+  total_shares = "log Total Shares",
+  total_comments = "log Total Comments",
+  total_reactions = "log Total Reactions",
   ver = "log Verifiable RTs + Posts",
   non_ver = "log Non-Verifiable RTs + Posts",
   true = "log True RTs + Posts",
@@ -74,6 +77,9 @@ label_map <- c(
 horizontal_order <- c(
   "SMIs",
   "AC",
+  "total_shares",
+  "total_comments",
+  "total_reactions",
   "n_posts",
   "eng",
   "ver",
@@ -186,17 +192,41 @@ resolve_stage_label <- function(var_name, default_label = NULL) {
   resolve_label(var_name, default_label)
 }
 
-ordered_horizontal_labels <- function(vars) {
+ordered_horizontal_labels <- function(vars, defaults = NULL) {
   ordered <- horizontal_order[horizontal_order %in% vars]
-  ordered_labels <- unname(label_map[ordered])
+  ordered_labels <- vapply(
+    ordered,
+    function(x) {
+      idx <- match(x, vars)
+      default_label <- if (!is.null(defaults) && !is.na(idx)) defaults[[idx]] else NULL
+      resolve_label(x, default_label)
+    },
+    character(1)
+  )
   extra_vars <- setdiff(vars, ordered)
-  extra_labels <- vapply(extra_vars, resolve_label, character(1))
+  extra_labels <- vapply(
+    extra_vars,
+    function(x) {
+      idx <- match(x, vars)
+      default_label <- if (!is.null(defaults) && !is.na(idx)) defaults[[idx]] else NULL
+      resolve_label(x, default_label)
+    },
+    character(1)
+  )
   c(ordered_labels, sort(extra_labels))
 }
 
 ordered_stage_labels <- function(vars, defaults = NULL) {
   ordered <- stage_order[stage_order %in% vars]
-  ordered_labels <- unname(stage_label_map[ordered])
+  ordered_labels <- vapply(
+    ordered,
+    function(x) {
+      idx <- match(x, vars)
+      default_label <- if (!is.null(defaults) && !is.na(idx)) defaults[[idx]] else NULL
+      resolve_stage_label(x, default_label)
+    },
+    character(1)
+  )
   extra_vars <- setdiff(vars, ordered)
   extra_labels <- vapply(
     extra_vars,
@@ -228,7 +258,10 @@ build_horizontal_plot_data <- function(original_path, permutation_path) {
       upper = coef + 1.96 * sd
     )
 
-  final$Variable <- factor(final$Variable, levels = ordered_horizontal_labels(final$var))
+  final$Variable <- factor(
+    final$Variable,
+    levels = ordered_horizontal_labels(final$var, final$Variable)
+  )
   final
 }
 
@@ -259,7 +292,10 @@ build_estimate_only_horizontal_data <- function(estimate_path) {
       upper = coef + 1.96 * sd
     )
 
-  final$Variable <- factor(final$Variable, levels = ordered_horizontal_labels(final$var))
+  final$Variable <- factor(
+    final$Variable,
+    levels = ordered_horizontal_labels(final$var, final$Variable)
+  )
   final
 }
 
@@ -679,6 +715,12 @@ plot_horizontal_family(
   original_dir = file.path(results_root, "followers_aggregate", "original"),
   permutations_dir = file.path(results_root, "followers_aggregate", "permutations"),
   output_dir = file.path(replots_root, "followers_aggregate")
+)
+
+plot_estimate_only_horizontal_family(
+  estimates_dir = file.path(results_root, "ads_intensive_baseline", "estimates"),
+  output_dir = file.path(replots_root, "ads_intensive_baseline"),
+  xlab_text = "Ads treatment estimate with 95% confidence interval"
 )
 
 plot_estimate_only_horizontal_family(
