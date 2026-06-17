@@ -110,20 +110,22 @@ compose_rhs <- function(...) {
 write_horizontal_plot <- function(
   final,
   plot_path,
-  xlab_text = "Estimate with 95% Confidence Interval",
+  xlab_text = "Average treatment effect, with 95% confidence interval",
   width = 8.5,
   height = 6.75
 ) {
   x_bounds <- axis_bounds(final$lower, final$upper)
+  y_limits <- if (is.factor(final$Variable)) rev(levels(final$Variable)) else rev(unique(final$Variable))
 
   results_plot <- ggplot(final, aes(y = Variable, x = coef)) +
     geom_point() +
     geom_linerange(aes(xmin = lower, xmax = upper), linewidth = 1) +
     geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
     coord_cartesian(xlim = x_bounds) +
+    scale_y_discrete(limits = y_limits) +
     theme_bw() +
     xlab(xlab_text) +
-    ylab("Variable") +
+    ylab(NULL) +
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank()
@@ -142,13 +144,13 @@ write_horizontal_plot <- function(
 write_stage_plot <- function(
   final,
   plot_path,
-  ylab_text = "Estimate with 95% Confidence Interval",
+  ylab_text = "Average treatment effect, with 95% confidence interval",
   width = 8.5,
   height = 6.75
 ) {
   y_bounds <- axis_bounds(final$lower, final$upper)
   n_vars <- nlevels(final$Variable)
-  shape_palette <- c(15, 16, 17, 18, 3, 7, 8, 0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14)
+  shape_palette <- c(15, 16, 17, 18, 3, 7, 8, 0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25)
 
   if (n_vars > length(shape_palette)) {
     stop(
@@ -340,42 +342,73 @@ standard_stage_labels <- c(
 )
 
 standard_outcome_label_map <- c(
-  total_shares = "Total Shares",
-  total_comments = "Total Comments",
-  total_reactions = "Total Reactions",
-  ver = "Verifiable Posts + Shares",
-  verifiability = "Verifiable Posts + Shares",
-  non_ver = "Non Verifiable Posts + Shares",
-  true = "True Posts + Shares",
-  fake = "Fake Posts + Shares",
-  n_posts = "Number of Posts + Shares",
-  eng = "Number of Posts + Shares (English)",
-  n_posts_covid = "COVID Posts + Shares",
-  pos_b_covid = "Positive COVID Posts + Shares",
-  neutral_b_covid = "Neutral COVID Posts + Shares",
-  neg_b_covid = "Negative COVID Posts + Shares",
-  n_posts_vax = "Vaccine Posts + Shares",
-  pos_b_vax = "Positive Vaccine Posts + Shares",
-  neutral_b_vax = "Neutral Vaccine Posts + Shares",
-  neg_b_vax = "Negative Vaccine Posts + Shares"
+  total_reactions = "log(Total reactions)",
+  total_comments = "log(Total comments)",
+  total_shares = "log(Total shares)",
+  ver = "log(Verifiable posts + shares)",
+  verifiability = "log(Verifiable posts + shares)",
+  non_ver = "log(Non-verifiable posts + shares)",
+  true = "log(True posts + shares)",
+  fake = "log(Fake posts + shares)",
+  n_posts = "log(Number of posts + shares)",
+  eng = "log(Number of posts + shares, English)",
+  n_posts_covid = "log(COVID posts + shares)",
+  pos_b_covid = "log(Positive COVID posts + shares)",
+  neutral_b_covid = "log(Neutral COVID posts + shares)",
+  neg_b_covid = "log(Negative COVID posts + shares)",
+  n_posts_vax = "log(Vaccine posts + shares)",
+  pos_b_vax = "log(Positive vaccine posts + shares)",
+  neutral_b_vax = "log(Neutral vaccine posts + shares)",
+  neg_b_vax = "log(Negative vaccine posts + shares)"
 )
 
-standard_outcome_order <- c(
-  "Total Shares",
-  "Total Comments",
-  "Total Reactions",
-  "Number of Posts + Shares",
-  "Number of Posts + Shares (English)",
-  "Non Verifiable Posts + Shares",
-  "Verifiable Posts + Shares",
-  "True Posts + Shares",
-  "Fake Posts + Shares",
-  "COVID Posts + Shares",
-  "Positive COVID Posts + Shares",
-  "Neutral COVID Posts + Shares",
-  "Negative COVID Posts + Shares",
-  "Vaccine Posts + Shares",
-  "Positive Vaccine Posts + Shares",
-  "Neutral Vaccine Posts + Shares",
-  "Negative Vaccine Posts + Shares"
+standard_outcome_control_label_map <- c(
+  total_reactions = "Total reactions",
+  total_comments = "Total comments",
+  total_shares = "Total shares",
+  ver = "Verifiable posts + shares",
+  verifiability = "Verifiable posts + shares",
+  non_ver = "Non-verifiable posts + shares",
+  true = "True posts + shares",
+  fake = "Fake posts + shares",
+  n_posts = "Number of posts + shares",
+  eng = "Number of posts + shares, English",
+  n_posts_covid = "COVID posts + shares",
+  pos_b_covid = "Positive COVID posts + shares",
+  neutral_b_covid = "Neutral COVID posts + shares",
+  neg_b_covid = "Negative COVID posts + shares",
+  n_posts_vax = "Vaccine posts + shares",
+  pos_b_vax = "Positive vaccine posts + shares",
+  neutral_b_vax = "Neutral vaccine posts + shares",
+  neg_b_vax = "Negative vaccine posts + shares"
 )
+
+standard_outcome_roots <- c(
+  "total_reactions",
+  "total_comments",
+  "total_shares",
+  "n_posts",
+  "eng",
+  "verifiability",
+  "non_ver",
+  "true",
+  "fake",
+  "n_posts_covid",
+  "pos_b_covid",
+  "neutral_b_covid",
+  "neg_b_covid",
+  "n_posts_vax",
+  "pos_b_vax",
+  "neutral_b_vax",
+  "neg_b_vax"
+)
+
+standard_outcome_order <- unname(standard_outcome_label_map[standard_outcome_roots])
+
+order_standard_outcome_vars <- function(outcome_vars) {
+  roots <- sub("^log_", "", sub("_base$", "", outcome_vars))
+  matches <- match(roots, standard_outcome_roots)
+  keep <- !is.na(matches)
+
+  outcome_vars[keep][order(matches[keep])]
+}

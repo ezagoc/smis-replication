@@ -33,6 +33,7 @@ stage <- "stage1_2"
 influencer_thr <- 9
 n_posts_thr <- 0
 n_permutations <- 500
+initial_path <- "../../../"
 
 results_root <- file.path("../../../results", results_subdir)
 original_dir <- file.path(results_root, "original")
@@ -136,6 +137,22 @@ extract_weighted_treated <- function(data, outcome_vars, int_cols, context_label
   fe_rhs <- fe_terms()
 
   estimates <- map_dbl(outcome_vars, function(outcome_var) {
+    lhs <- data[[outcome_var]]
+    bad_lhs <- is.na(lhs) | is.nan(lhs) | !is.finite(lhs)
+    n_bad_lhs <- sum(bad_lhs, na.rm = TRUE)
+
+    if (n_bad_lhs > 0) {
+      stop(
+        paste0(
+          "Outcome ", outcome_var, " has ", n_bad_lhs,
+          " non-finite LHS values before feols",
+          if (nzchar(context_label)) paste0(" (", context_label, ")") else "",
+          "."
+        ),
+        call. = FALSE
+      )
+    }
+
     fmla <- as.formula(
       paste0(
         outcome_var, " ~ ", rhs, " | ", fe_rhs
@@ -208,7 +225,7 @@ load_base_data <- function(batch_filter = NULL) {
   base_df <- get_analysis_ver_final_winsor(
     stage = stage,
     batches = "b1b2",
-    initial_path = "../../"
+    initial_path = initial_path
   ) |>
     filter(n_posts_base > n_posts_thr) |>
     left_join(df_s, by = "follower_id", relationship = "many-to-one") |>

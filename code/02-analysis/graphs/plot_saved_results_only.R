@@ -30,6 +30,7 @@ resolve_script_dir <- function() {
 }
 
 setwd(resolve_script_dir())
+source("../analysis/supplemental_outcome_helpers.R")
 
 # 1.0 Import packages
 ipak <- function(pkg) {
@@ -65,100 +66,48 @@ dir.create(combined_root, showWarnings = FALSE, recursive = TRUE)
 # 3.0 Labels and helpers
 label_map <- c(
   AC = "Follows Africa Check",
-  SMIs = "Number of SMIs Followed",
-  total_shares = "log Total Shares",
-  total_comments = "log Total Comments",
-  total_reactions = "log Total Reactions",
-  ver = "log Verifiable RTs + Posts",
-  non_ver = "log Non-Verifiable RTs + Posts",
-  true = "log True RTs + Posts",
-  fake = "log Fake RTs + Posts",
-  n_posts = "log Number of RTs + Posts",
-  eng = "log Number of RTs + Posts (English)",
-  n_posts_covid = "log COVID RTs + Posts",
-  pos_b_covid = "log Positive COVID RTs + Posts",
-  neutral_b_covid = "log Neutral COVID RTs + Posts",
-  neg_b_covid = "log Negative COVID RTs + Posts",
-  n_posts_vax = "log Vaccine RTs + Posts",
-  pos_b_vax = "log Positive Vaccine RTs + Posts",
-  neutral_b_vax = "log Neutral Vaccine RTs + Posts",
-  neg_b_vax = "log Negative Vaccine RTs + Posts",
-  log_total_shares = "log Total Shares",
-  log_total_comments = "log Total Comments",
-  log_total_reactions = "log Total Reactions",
-  log_verifiability = "log Verifiable Posts + Shares",
-  log_non_ver = "log Non Verifiable Posts + Shares",
-  log_true = "log True Posts + Shares",
-  log_fake = "log Fake Posts + Shares",
-  log_n_posts = "log Number of Posts + Shares",
-  log_eng = "log Number of Posts + Shares (English)",
-  log_pos_b_covid = "log Positive COVID Posts + Shares",
-  log_neutral_b_covid = "log Neutral COVID Posts + Shares",
-  log_neg_b_covid = "log Negative COVID Posts + Shares",
-  log_n_posts_covid = "log COVID Posts + Shares",
-  log_pos_b_vax = "log Positive Vaccine Posts + Shares",
-  log_neutral_b_vax = "log Neutral Vaccine Posts + Shares",
-  log_neg_b_vax = "log Negative Vaccine Posts + Shares",
-  log_n_posts_vax = "log Vaccine Posts + Shares"
+  SMIs = "Number of SMIs followed",
+  total_reactions = unname(standard_outcome_label_map["total_reactions"]),
+  total_comments = unname(standard_outcome_label_map["total_comments"]),
+  total_shares = unname(standard_outcome_label_map["total_shares"]),
+  ver = unname(standard_outcome_label_map["ver"]),
+  verifiability = unname(standard_outcome_label_map["verifiability"]),
+  non_ver = unname(standard_outcome_label_map["non_ver"]),
+  true = unname(standard_outcome_label_map["true"]),
+  fake = unname(standard_outcome_label_map["fake"]),
+  n_posts = unname(standard_outcome_label_map["n_posts"]),
+  eng = unname(standard_outcome_label_map["eng"]),
+  n_posts_covid = unname(standard_outcome_label_map["n_posts_covid"]),
+  pos_b_covid = unname(standard_outcome_label_map["pos_b_covid"]),
+  neutral_b_covid = unname(standard_outcome_label_map["neutral_b_covid"]),
+  neg_b_covid = unname(standard_outcome_label_map["neg_b_covid"]),
+  n_posts_vax = unname(standard_outcome_label_map["n_posts_vax"]),
+  pos_b_vax = unname(standard_outcome_label_map["pos_b_vax"]),
+  neutral_b_vax = unname(standard_outcome_label_map["neutral_b_vax"]),
+  neg_b_vax = unname(standard_outcome_label_map["neg_b_vax"]),
+  log_total_reactions = unname(standard_outcome_label_map["total_reactions"]),
+  log_total_comments = unname(standard_outcome_label_map["total_comments"]),
+  log_total_shares = unname(standard_outcome_label_map["total_shares"]),
+  log_verifiability = unname(standard_outcome_label_map["verifiability"]),
+  log_non_ver = unname(standard_outcome_label_map["non_ver"]),
+  log_true = unname(standard_outcome_label_map["true"]),
+  log_fake = unname(standard_outcome_label_map["fake"]),
+  log_n_posts = unname(standard_outcome_label_map["n_posts"]),
+  log_eng = unname(standard_outcome_label_map["eng"]),
+  log_n_posts_covid = unname(standard_outcome_label_map["n_posts_covid"]),
+  log_pos_b_covid = unname(standard_outcome_label_map["pos_b_covid"]),
+  log_neutral_b_covid = unname(standard_outcome_label_map["neutral_b_covid"]),
+  log_neg_b_covid = unname(standard_outcome_label_map["neg_b_covid"]),
+  log_n_posts_vax = unname(standard_outcome_label_map["n_posts_vax"]),
+  log_pos_b_vax = unname(standard_outcome_label_map["pos_b_vax"]),
+  log_neutral_b_vax = unname(standard_outcome_label_map["neutral_b_vax"]),
+  log_neg_b_vax = unname(standard_outcome_label_map["neg_b_vax"])
 )
 
-horizontal_order <- c(
-  "SMIs",
-  "AC",
-  "total_shares",
-  "total_comments",
-  "total_reactions",
-  "n_posts",
-  "eng",
-  "ver",
-  "non_ver",
-  "true",
-  "fake",
-  "n_posts_covid",
-  "pos_b_covid",
-  "neutral_b_covid",
-  "neg_b_covid",
-  "n_posts_vax",
-  "pos_b_vax",
-  "neutral_b_vax",
-  "neg_b_vax",
-  "log_total_shares",
-  "log_total_comments",
-  "log_total_reactions",
-  "log_n_posts",
-  "log_eng",
-  "log_verifiability",
-  "log_non_ver",
-  "log_true",
-  "log_fake",
-  "log_n_posts_covid",
-  "log_pos_b_covid",
-  "log_neutral_b_covid",
-  "log_neg_b_covid",
-  "log_n_posts_vax",
-  "log_pos_b_vax",
-  "log_neutral_b_vax",
-  "log_neg_b_vax"
-)
-
-stage_label_map <- c(
-  AC = "Follows Africa Check",
-  SMIs = "Number of SMIs Followed",
-  fake = "log Fake Posts + Shares",
-  true = "log True Posts + Shares",
-  ver = "log Verifiable Posts + Shares",
-  non_ver = "log Non Verifiable Posts + Shares",
-  n_posts = "log Number of Posts + Shares",
-  eng = "log Number of Posts + Shares (English)"
-)
-
-stage_order <- c("SMIs", "AC", "n_posts", "eng", "ver", "non_ver", "true", "fake")
-
-stage_map <- c(
-  stage1_2 = "Weeks 1-4",
-  stage3_4 = "Weeks 5-8",
-  stage5_6 = "Weeks 9-12"
-)
+horizontal_order <- c("SMIs", "AC", standard_outcome_roots, paste0("log_", standard_outcome_roots))
+stage_label_map <- c(AC = "Follows Africa Check", SMIs = "Number of SMIs followed", standard_outcome_label_map)
+stage_order <- c("SMIs", "AC", standard_outcome_roots)
+stage_map <- standard_stage_labels
 
 axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
   lo <- min(lower, na.rm = TRUE)
@@ -175,18 +124,99 @@ axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
 
 batch_from_name <- function(filename) {
   if (grepl("_b1_", filename, fixed = TRUE)) {
-    return("Batch 1")
+    return("Batch 1 only")
   }
 
   if (grepl("_b2_", filename, fixed = TRUE)) {
-    return("Batch 2")
+    return("Batch 2 only")
   }
 
   if (grepl("_both_", filename, fixed = TRUE)) {
-    return("Both Batches")
+    return("Both batches")
   }
 
   NA_character_
+}
+
+family_profile <- function(family_key) {
+  list(
+    uses_ads = grepl("^ads_", family_key) || grepl("^followers_ads$", family_key),
+    uses_followers_outcomes = grepl("^followers_", family_key),
+    is_stage = grepl("stages|linear_90p_p5|95p_weighted", family_key),
+    is_aggregate = grepl("aggregate", family_key),
+    is_intensive = grepl("intensive", family_key),
+    is_strong = grepl("strong", family_key)
+  )
+}
+
+family_outcome_phrase <- function(profile) {
+  if (profile$uses_followers_outcomes) {
+    return("follower-account outcomes")
+  }
+
+  "online follower behaviors"
+}
+
+family_title <- function(family_key, batch_label = NULL) {
+  profile <- family_profile(family_key)
+  outcome_phrase <- family_outcome_phrase(profile)
+
+  base_title <- if (profile$uses_ads) {
+    paste0("Average effect of assignment to receive treatment via paid-for ads on ", outcome_phrase)
+  } else if (profile$is_intensive) {
+    if (profile$is_strong) {
+      paste0("Sample-weighted average marginal effect of an additional strongly-followed SMI being assigned to treatment on ", outcome_phrase)
+    } else {
+      paste0("Sample-weighted average marginal effect of an additional initially-followed SMI being assigned to treatment on ", outcome_phrase)
+    }
+  } else if (profile$is_strong) {
+    paste0("Average effect of one strongly-followed SMI being assigned to treatment on ", outcome_phrase)
+  } else {
+    paste0("Average effect of one initially-followed SMI being assigned to treatment on ", outcome_phrase)
+  }
+
+  if (!is.null(batch_label) && !is.na(batch_label) && nzchar(batch_label)) {
+    return(paste0(base_title, " (", batch_label, ")"))
+  }
+
+  base_title
+}
+
+family_note <- function(family_key, batch_label = NULL) {
+  profile <- family_profile(family_key)
+  sample_note <- if (profile$uses_ads) {
+    "The treatment is assignment to receive paid-for ads."
+  } else if (profile$is_intensive && profile$is_strong) {
+    "The sample is restricted to followers who strongly followed at least one study SMI, and the coefficient is the sample-weighted marginal effect of one additional treated SMI."
+  } else if (profile$is_intensive) {
+    "The coefficient is the sample-weighted marginal effect of one additional treated initially-followed SMI."
+  } else if (profile$is_strong) {
+    "The sample is restricted to followers who strongly followed at least one study SMI."
+  } else {
+    "The sample consists of followers who initially followed exactly one study SMI."
+  }
+
+  spec_note <- if (profile$is_stage) {
+    "This figure reports stage-by-stage effects for weeks 1-4, 5-8, and 9-12."
+  } else if (profile$is_aggregate) {
+    "This figure reports aggregated treatment-period effects over weeks 1-12."
+  } else {
+    "This figure reports the existing baseline specification."
+  }
+
+  se_note <- if (profile$uses_ads) {
+    "Whiskers show 95% confidence intervals based on heteroskedasticity-robust standard errors."
+  } else {
+    "Whiskers show 95% confidence intervals based on permutation standard deviations."
+  }
+
+  batch_note <- if (!is.null(batch_label) && !is.na(batch_label) && nzchar(batch_label)) {
+    paste0("The figure uses the ", tolower(batch_label), " sample.")
+  } else {
+    "Separate panels show Batch 1 only, Batch 2 only, and both batches."
+  }
+
+  paste("Notes:", spec_note, sample_note, batch_note, se_note)
 }
 
 read_excel_short_path <- function(path) {
@@ -288,7 +318,7 @@ build_horizontal_plot_data <- function(original_path, permutation_path) {
 
   final$Variable <- factor(
     final$Variable,
-    levels = ordered_horizontal_labels(final$var, final$Variable)
+    levels = rev(ordered_horizontal_labels(final$var, final$Variable))
   )
   final
 }
@@ -322,7 +352,7 @@ build_estimate_only_horizontal_data <- function(estimate_path) {
 
   final$Variable <- factor(
     final$Variable,
-    levels = ordered_horizontal_labels(final$var, final$Variable)
+    levels = rev(ordered_horizontal_labels(final$var, final$Variable))
   )
   final
 }
@@ -343,7 +373,7 @@ build_combined_horizontal_data <- function(original_dir, permutations_dir) {
   })
 }
 
-shape_palette <- c(15, 16, 17, 18, 3, 7, 8, 0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14)
+shape_palette <- c(15, 16, 17, 18, 3, 7, 8, 0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25)
 
 build_stage_plot_data <- function(estimate_path) {
   final <- read_excel_short_path(estimate_path)
@@ -402,12 +432,13 @@ build_combined_stage_data <- function(estimates_dir) {
   })
 }
 
-plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, xlab_text = "Total Treated Estimate with 95% Confidence Interval") {
+plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, xlab_text = "Average treatment effect, with 95% confidence interval") {
   if (!dir.exists(original_dir) || !dir.exists(permutations_dir)) {
     return(invisible(NULL))
   }
 
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  family_key <- basename(output_dir)
 
   original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
 
@@ -427,18 +458,25 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, x
 
     x_bounds <- axis_bounds(final$lower, final$upper)
     plot_height <- max(7.25, 0.42 * nlevels(droplevels(final$Variable)) + 1.5)
+    batch_label <- batch_from_name(filename)
 
     results_plot <- ggplot(final, aes(y = Variable, x = coef)) +
       geom_point() +
       geom_linerange(aes(xmin = lower, xmax = upper), linewidth = 1) +
       geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(xlim = x_bounds) +
+      labs(
+        title = family_title(family_key, batch_label),
+        x = xlab_text,
+        y = NULL,
+        caption = family_note(family_key, batch_label)
+      ) +
       theme_bw() +
-      xlab(xlab_text) +
-      ylab("Variable") +
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        panel.grid.minor = element_blank()
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)
       )
 
     ggsave(
@@ -458,6 +496,7 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
   }
 
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  family_key <- basename(output_dir)
 
   estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
 
@@ -471,18 +510,25 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
 
     x_bounds <- axis_bounds(final$lower, final$upper)
     plot_height <- max(7.25, 0.42 * nlevels(droplevels(final$Variable)) + 1.5)
+    batch_label <- batch_from_name(filename)
 
     results_plot <- ggplot(final, aes(y = Variable, x = coef)) +
       geom_point() +
       geom_linerange(aes(xmin = lower, xmax = upper), linewidth = 1) +
       geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(xlim = x_bounds) +
+      labs(
+        title = family_title(family_key, batch_label),
+        x = xlab_text,
+        y = NULL,
+        caption = family_note(family_key, batch_label)
+      ) +
       theme_bw() +
-      xlab(xlab_text) +
-      ylab("Variable") +
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        panel.grid.minor = element_blank()
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)
       )
 
     ggsave(
@@ -496,7 +542,7 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
   }
 }
 
-plot_combined_balance_family <- function(original_dir, permutations_dir, output_path, family_title) {
+plot_combined_balance_family <- function(original_dir, permutations_dir, output_path, family_title_text = NULL) {
   if (!dir.exists(original_dir) || !dir.exists(permutations_dir)) {
     return(invisible(NULL))
   }
@@ -507,7 +553,10 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
     return(invisible(NULL))
   }
 
-  final$Batch <- factor(final$Batch, levels = c("Batch 1", "Batch 2", "Both Batches"))
+  family_key <- basename(output_path)
+  family_key <- sub("_batches\\.pdf$", "", family_key)
+  family_key <- sub("\\.pdf$", "", family_key)
+  final$Batch <- factor(final$Batch, levels = c("Batch 1 only", "Batch 2 only", "Both batches"))
   x_bounds <- axis_bounds(final$lower, final$upper)
   plot_height <- max(6.59, 0.42 * nlevels(droplevels(final$Variable)) + 1.5)
 
@@ -518,15 +567,17 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
     coord_cartesian(xlim = x_bounds) +
     facet_wrap(~Batch, nrow = 1) +
     labs(
-      title = family_title,
-      x = "Total Treated Estimate with 95% Confidence Interval",
-      y = "Variable"
+      title = family_title(family_key),
+      x = "Average treatment effect, with 95% confidence interval",
+      y = NULL,
+      caption = family_note(family_key)
     ) +
     theme_bw() +
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
-      plot.title = element_text(hjust = 0.5, face = "bold")
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      plot.caption = element_text(hjust = 0)
     )
 
   ggsave(
@@ -539,12 +590,13 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
   )
 }
 
-plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Total Treated Estimate with 95% Confidence Interval") {
+plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Average treatment effect, with 95% confidence interval") {
   if (!dir.exists(estimates_dir)) {
     return(invisible(NULL))
   }
 
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  family_key <- basename(output_dir)
 
   estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
 
@@ -570,6 +622,7 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Total T
 
     y_bounds <- axis_bounds(final$lower, final$upper)
     plot_height <- max(7.25, 0.38 * n_vars + 2.25)
+    batch_label <- batch_from_name(filename)
 
     results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
       geom_point(
@@ -586,13 +639,19 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Total T
       scale_color_manual(values = rep("black", n_vars), name = "Outcome") +
       geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(ylim = y_bounds) +
+      labs(
+        title = family_title(family_key, batch_label),
+        y = ylab_text,
+        x = "Treatment stage",
+        caption = family_note(family_key, batch_label)
+      ) +
       theme_bw() +
-      ylab(ylab_text) +
-      xlab("Stage") +
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)
       )
 
     ggsave(
@@ -606,7 +665,7 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Total T
   }
 }
 
-plot_combined_stage_family <- function(estimates_dir, output_path, family_title, ylab_text = "Total Treated Estimate with 95% Confidence Interval") {
+plot_combined_stage_family <- function(estimates_dir, output_path, family_title_text = NULL, ylab_text = "Average treatment effect, with 95% confidence interval") {
   if (!dir.exists(estimates_dir)) {
     return(invisible(NULL))
   }
@@ -617,14 +676,17 @@ plot_combined_stage_family <- function(estimates_dir, output_path, family_title,
     return(invisible(NULL))
   }
 
-  final$Batch <- factor(final$Batch, levels = c("Batch 1", "Batch 2", "Both Batches"))
+  family_key <- basename(output_path)
+  family_key <- sub("_batches\\.pdf$", "", family_key)
+  family_key <- sub("\\.pdf$", "", family_key)
+  final$Batch <- factor(final$Batch, levels = c("Batch 1 only", "Batch 2 only", "Both batches"))
   n_vars <- nlevels(droplevels(final$Variable))
 
   if (n_vars > length(shape_palette)) {
     stop(
       paste0(
         "plot_combined_stage_family only has ", length(shape_palette),
-        " point shapes configured, but received ", n_vars, " outcomes in ", family_title, "."
+        " point shapes configured, but received ", n_vars, " outcomes in ", family_key, "."
       ),
       call. = FALSE
     )
@@ -650,16 +712,18 @@ plot_combined_stage_family <- function(estimates_dir, output_path, family_title,
     coord_cartesian(ylim = y_bounds) +
     facet_wrap(~Batch, nrow = 1) +
     labs(
-      title = family_title,
+      title = family_title(family_key),
       y = ylab_text,
-      x = "Stage"
+      x = "Treatment stage",
+      caption = family_note(family_key)
     ) +
     theme_bw() +
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
       axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(hjust = 0.5, face = "bold")
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      plot.caption = element_text(hjust = 0)
     )
 
   ggsave(

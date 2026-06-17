@@ -1,4 +1,4 @@
-﻿library(readxl)
+library(readxl)
 library(dplyr)
 library(purrr)
 
@@ -43,6 +43,7 @@ tables_dir <- file.path(results_root, "tables")
 stage <- "stage1_2"
 influencer_thr <- 9
 n_posts_thr <- 0
+initial_path <- "../../../"
 
 dir.create(tables_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -116,7 +117,7 @@ build_control_mean_table <- function(batch_code) {
   base_df <- get_analysis_ver_final_winsor(
     stage = stage,
     batches = "b1b2",
-    initial_path = "../../"
+    initial_path = initial_path
   ) |>
     filter(n_posts_base > n_posts_thr) |>
     left_join(df_s, by = "follower_id", relationship = "many-to-one") |>
@@ -281,11 +282,11 @@ build_batch_table <- function(df, batch_label) {
     " & \\multicolumn{2}{c}{IHS (arcsinh)} & \\multicolumn{2}{c}{log(y+1)} & \\multicolumn{2}{c}{Dummy (y>0)} & \\multicolumn{2}{c}{Chen-Roth} \\\\\n",
     " & Ads & SMI & Ads & SMI & Ads & SMI & Ads & SMI \\\\\n",
     "\\hline\n",
-    "Total Treated & ", paste(coef_cells, collapse = " & "), " \\\\\n",
+    "Treatment effect & ", paste(coef_cells, collapse = " & "), " \\\\\n",
     " & ", paste(se_cells, collapse = " & "), " \\\\\n",
-    "Pure ctrl mean & ", paste(mean_cells, collapse = " & "), " \\\\\n",
+    "Control-group mean & ", paste(mean_cells, collapse = " & "), " \\\\\n",
     "\\hline\n",
-    "\\multicolumn{9}{l}{\\parbox[t]{15.5cm}{\\textit{Notes:} Standard errors are permutation-based. Significance stars: * p<0.10, ** p<0.05, *** p<0.01.}} \\\\\n",
+    "\\multicolumn{9}{l}{\\parbox[t]{15.5cm}{\\textit{Notes:} Standard errors are permutation-based. Significance stars: * p<0.10, ** p<0.05, *** p<0.01. Columns report paid-for-ad retweets and SMI retweets under the existing first-stage specification.}} \\\\\n",
     "\\end{tabular}\n",
     "\\end{table}\n"
   )
@@ -322,8 +323,3 @@ for (estimate_path in estimate_files) {
 }
 
 message("Done: ", table_stub)
-
-
-
-
-

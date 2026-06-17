@@ -1,4 +1,4 @@
-﻿# 0.0 Set up the environment and locate this script
+# 0.0 Set up the environment and locate this script
 rm(list = ls())
 rstudioapi::getActiveDocumentContext
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -17,7 +17,7 @@ map(paste0(src_path, source_files), source)
 ipak(packages)
 
 # 2.0 Define paths, samples, and the variables we want to aggregate
-initial_path <- "../../"
+initial_path <- "../../../"
 analysis_root <- file.path(initial_path, "data", "04-analysis")
 
 list_stages <- c("stage1_2", "stage3_4", "stage5_6")
@@ -277,4 +277,3 @@ final <- aggregated_long |>
 # 8.0 Merge baseline and treatment information back to the aggregated outcomes
 aggregate_data <- treatment_info |>
   left_join(final, by = id_cols)
-

@@ -1,14 +1,14 @@
-﻿# 0.0 Set up the environment, clean it and set working directory to the code path
 rm(list = ls())
 rstudioapi::getActiveDocumentContext
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-# 1.0 Import functions and packages
 library(purrr)
+source("supplemental_outcome_helpers.R")
 
-src_path <- "../../../src/utils/"
+initial_path <- repo_initial_path()
+src_path <- paste0(initial_path, "src/utils/")
 source_files <- c(
-  "funcs.R",
+  "funcs_analysis.R",
   "constants_final.R",
   "import_data.R"
 )
@@ -16,33 +16,46 @@ source_files <- c(
 map(paste0(src_path, source_files), source)
 ipak(packages)
 
-# 2.0 Define constants
-country <- "joint"
-data_type <- "Verifiability"
 list_stages <- c("stage1_2", "stage3_4", "stage5_6")
-list_types <- c("log_")
+type <- "log_"
 file_stub <- "extensive_verifiability_fes_normal_p90_p5_strong"
 n_posts_thr <- 0
 n_permutations <- 1000
 permutation_suffix <- paste0("_", n_permutations, "perm")
 
-results_root <- file.path("../../../results", "extensive_linear_90p_p5_strong")
+results_root <- results_path("extensive_linear_90p_p5_strong")
 original_dir <- file.path(results_root, "original")
 permutations_dir <- file.path(results_root, "permutations")
 estimates_dir <- file.path(results_root, "estimates")
 plots_dir <- file.path(results_root, "plots")
 
-outcome_roots <- c("verifiability", "non_ver", "true", "fake", "n_posts")
-output_names <- c("ver", "non_ver", "true", "fake", "n_posts")
-stage_map <- c(
-  stage1_2 = "Weeks 1-4",
-  stage3_4 = "Weeks 5-8",
-  stage5_6 = "Weeks 9-12"
-)
 batch_specs <- list(
   b1 = "b1",
   b2 = "b2",
   both = NULL
+)
+
+id_cols <- c("follower_id", "pais", "batch_id")
+ver_endline_vars <- c(
+  "total_shares",
+  "total_comments",
+  "total_reactions",
+  "verifiability",
+  "non_ver",
+  "true",
+  "fake",
+  "n_posts"
+)
+english_endline_vars <- c("eng")
+sentiment_endline_vars <- c(
+  "n_posts_covid",
+  "pos_b_covid",
+  "neutral_b_covid",
+  "neg_b_covid",
+  "n_posts_vax",
+  "pos_b_vax",
+  "neutral_b_vax",
+  "neg_b_vax"
 )
 
 dir.create(results_root, showWarnings = FALSE, recursive = TRUE)
@@ -51,26 +64,70 @@ dir.create(permutations_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(estimates_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(plots_dir, showWarnings = FALSE, recursive = TRUE)
 
-prepare_batch_data <- function(data, batch_filter = NULL) {
-  if (is.null(batch_filter)) {
-    return(data)
-  }
+collect_stage_data <- function(stage, batch_filter = NULL) {
+  ver_df <- get_analysis_ver_final_winsor(
+    stage = stage,
+    batches = "b1b2",
+    initial_path = initial_path
+  ) |>
+    left_join(load_belp90(initial_path), by = c("follower_id", "batch_id", "pais")) |>
+    filter(total_influencers == 1) |>
+    filter(c_t_strong_total > 0) |>
+    filter(below_p90 == 1) |>
+    filter(n_posts_base > n_posts_thr)
 
-  data |>
-    filter(batch_id == batch_filter)
-}
+  eng_df <- get_analysis_english_winsor(
+    stage = stage,
+    batches = "b1b2",
+    initial_path = initial_path
+  )
 
-axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
-  lo <- min(lower, na.rm = TRUE)
-  hi <- max(upper, na.rm = TRUE)
-  span <- hi - lo
+  sent_df <- get_analysis_sent_bert_final2(
+    stage = stage,
+    batches = "b1b2",
+    initial_path = initial_path
+  )
 
-  if (!is.finite(span) || span <= 0) {
-    span <- 0
-  }
+  stage_df <- ver_df |>
+    select(
+      all_of(id_cols),
+      total_treated,
+      total_influencers,
+      below_p90,
+      n_posts_base,
+      c_t_strong_total,
+      all_of(ver_endline_vars),
+      any_of(paste0(ver_endline_vars, "_base"))
+    ) |>
+    left_join(
+      eng_df |>
+        select(all_of(id_cols), all_of(english_endline_vars), any_of("eng_base")),
+      by = id_cols
+    ) |>
+    left_join(
+      sent_df |>
+        select(all_of(id_cols), all_of(sentiment_endline_vars), any_of(paste0(sentiment_endline_vars, "_base"))),
+      by = id_cols
+    ) |>
+    prepare_batch_data(batch_filter)
 
-  pad <- max(span * pad_fraction, min_pad)
-  c(lo - pad, hi + pad)
+  all_base_vars <- grep("_base$", names(stage_df), value = TRUE)
+  all_endline_vars <- setdiff(
+    names(stage_df),
+    c(id_cols, "total_treated", "total_influencers", "below_p90", "c_t_strong_total", all_base_vars)
+  )
+  paired_roots <- all_endline_vars[paste0(all_endline_vars, "_base") %in% all_base_vars]
+
+  stage_df <- stage_df |>
+    mutate(
+      across(all_of(paired_roots), \(x) log(x + 1), .names = "log_{.col}"),
+      across(all_of(paste0(paired_roots, "_base")), \(x) log(x + 1), .names = "log_{.col}")
+    )
+
+  list(
+    data = stage_df,
+    outcome_vars = order_standard_outcome_vars(paste0("log_", paired_roots))
+  )
 }
 
 extract_total_treated <- function(data, outcome_vars, context_label = "", allow_missing = FALSE) {
@@ -123,207 +180,104 @@ extract_total_treated <- function(data, outcome_vars, context_label = "", allow_
     estimate
   })
 
-  stats::setNames(as.list(estimates), output_names) |>
+  stats::setNames(as.list(estimates), sub("^log_", "", outcome_vars)) |>
     as_tibble()
 }
 
-summarise_stage_results <- function(original_coefs, permutation_coefs, stage, type) {
-  addon <- if (type == "log_") {
-    "log "
-  } else if (type == "arc_") {
-    "arcsinh "
-  } else {
-    ""
-  }
-
+summarise_stage_results <- function(original_coefs, permutation_coefs, stage) {
   original_coefs |>
     pivot_longer(cols = everything(), names_to = "var", values_to = "coef") |>
     left_join(
       permutation_coefs |>
-        summarise(across(everything(), sd, na.rm = TRUE)) |>
+        summarise(across(everything(), \(x) sd(x, na.rm = TRUE))) |>
         pivot_longer(cols = everything(), names_to = "var", values_to = "sd"),
       by = "var"
     ) |>
     mutate(
       stage = stage,
-      Variable = case_when(
-        var == "ver" ~ paste0(addon, "Verifiable Posts + Shares"),
-        var == "non_ver" ~ paste0(addon, "Non Verifiable Posts + Shares"),
-        var == "true" ~ paste0(addon, "True Posts + Shares"),
-        var == "fake" ~ paste0(addon, "Fake Posts + Shares"),
-        var == "n_posts" ~ paste0(addon, "Number of Posts + Shares")
-      ),
-      Stage = recode(stage, !!!stage_map)
-    )
+      Variable = unname(standard_outcome_label_map[var]),
+      Stage = recode(stage, !!!standard_stage_labels)
+    ) |>
+    filter(!is.na(Variable))
 }
 
-write_outputs <- function(type, batch_name, stage, original_coefs, permutation_coefs) {
+write_outputs <- function(batch_name, stage, original_coefs, permutation_coefs) {
   file_code <- paste0(type, file_stub, "_", batch_name, "_", stage, permutation_suffix)
 
-  write_xlsx(
-    original_coefs,
-    file.path(original_dir, paste0(file_code, ".xlsx"))
-  )
-
-  write_xlsx(
-    permutation_coefs,
-    file.path(permutations_dir, paste0(file_code, ".xlsx"))
-  )
+  write_xlsx(original_coefs, file.path(original_dir, paste0(file_code, ".xlsx")))
+  write_xlsx(permutation_coefs, file.path(permutations_dir, paste0(file_code, ".xlsx")))
 }
 
-# 3.0 Load shared filters
-belp90 <- read_parquet("../../../data/04-analysis/joint/below_p90_p95_divider.parquet") |>
-  select(-n_posts_base)
+estimate_plot_height <- function(n_outcomes) {
+  max(7.5, 0.38 * n_outcomes + 2.25)
+}
 
-# 4.0 Run the specification for each batch sample and stage
-for (type in list_types) {
-  outcome_vars <- paste0(type, outcome_roots)
+for (batch_name in names(batch_specs)) {
+  message("Running batch sample: ", batch_name)
 
-  for (batch_name in names(batch_specs)) {
-    message("Running batch sample: ", batch_name)
+  batch_filter <- batch_specs[[batch_name]]
+  stage_summaries <- list()
 
-    batch_filter <- batch_specs[[batch_name]]
-    stage_summaries <- list()
+  for (stage in list_stages) {
+    message("Running stage: ", stage, " for ", batch_name)
 
-    for (stage in list_stages) {
-      message("Running stage: ", stage, " for ", batch_name)
-
-      base_df <- get_analysis_ver_final_winsor(
-        stage = stage,
-        batches = "b1b2",
-        initial_path = "../../"
-      ) |>
-        filter(total_influencers == 1) |>
-        left_join(belp90, by = c("follower_id", "batch_id", "pais")) |>
-        filter(n_posts_base > n_posts_thr) |>
-        filter(below_p90 == 1) |>
-        filter(c_t_strong_total > 0) |>
-        prepare_batch_data(batch_filter)
-
-      original_coefs <- extract_total_treated(
-        data = base_df,
-        outcome_vars = outcome_vars,
-        context_label = paste(batch_name, stage, "original")
-      )
-
-      permutation_coefs <- map_dfr(seq_len(n_permutations), function(i) {
-        message("Permutation ", i, " / ", n_permutations, " for ", batch_name, " - ", stage)
-
-        perm_treated_col <- paste0("n_influencers_followed_treatment_p", i)
-        perm_total_col <- paste0("n_influencers_followed_p_", i)
-
-        permuted_counts <- read_parquet(
-          paste0(
-            "../../../data/04-analysis/joint/small_ties_b1b2/small_tie",
-            i,
-            ".parquet"
-          )
-        ) |>
-          select(follower_id, pais, batch_id, all_of(c(perm_treated_col, perm_total_col)))
-
-        permuted_df <- base_df |>
-          left_join(permuted_counts, by = c("follower_id", "batch_id", "pais"))
-
-        permuted_df <- poolTreatmentBalance2(permuted_df, perm_treated_col, perm_total_col)
-        permuted_df[[perm_treated_col]] <- NULL
-        permuted_df[[perm_total_col]] <- NULL
-
-        extract_total_treated(
-          data = permuted_df,
-          outcome_vars = outcome_vars,
-          context_label = paste(batch_name, stage, "permutation", i),
-          allow_missing = TRUE
-        )
-      })
-
-      write_outputs(
-        type = type,
-        batch_name = batch_name,
-        stage = stage,
-        original_coefs = original_coefs,
-        permutation_coefs = permutation_coefs
-      )
-
-      stage_summaries[[stage]] <- summarise_stage_results(
-        original_coefs = original_coefs,
-        permutation_coefs = permutation_coefs,
-        stage = stage,
-        type = type
-      )
-    }
-
-    final <- bind_rows(stage_summaries)
-
-    final$Variable <- factor(
-      final$Variable,
-      levels = c(
-        "log Number of Posts + Shares",
-        "log Non Verifiable Posts + Shares",
-        "log Verifiable Posts + Shares",
-        "log True Posts + Shares",
-        "log Fake Posts + Shares"
-      )
+    stage_bundle <- collect_stage_data(stage, batch_filter = batch_filter)
+    original_coefs <- extract_total_treated(
+      data = stage_bundle$data,
+      outcome_vars = stage_bundle$outcome_vars,
+      context_label = paste(batch_name, stage, "original")
     )
 
-    final$Stage <- factor(
-      final$Stage,
-      levels = unname(stage_map)
-    )
+    permutation_coefs <- map_dfr(seq_len(n_permutations), function(i) {
+      message("Permutation ", i, " / ", n_permutations, " for ", batch_name, " - ", stage)
 
-    write_xlsx(
-      final,
-      file.path(
-        estimates_dir,
-        paste0(type, file_stub, "_", batch_name, permutation_suffix, "_estimates.xlsx")
-      )
-    )
+      perm_treated_col <- paste0("n_influencers_followed_treatment_p", i)
+      perm_total_col <- paste0("n_influencers_followed_p_", i)
 
-    y_bounds <- axis_bounds(
-      final$coef - 1.96 * final$sd,
-      final$coef + 1.96 * final$sd
-    )
-
-    results_plot <- ggplot(data = final, aes(x = Stage, y = coef)) +
-      geom_point(
-        aes(shape = Variable, color = Variable),
-        size = 3,
-        position = position_dodge(width = 0.5)
-      ) +
-      geom_linerange(
-        aes(
-          ymin = coef - 1.96 * sd,
-          ymax = coef + 1.96 * sd,
-          color = Variable
-        ),
-        position = position_dodge(width = 0.5),
-        size = 1
-      ) +
-      scale_shape_manual(values = c(15, 16, 17, 4, 7), name = "Outcome") +
-      scale_color_manual(values = rep("black", 5), name = "Outcome") +
-      geom_hline(yintercept = 0, linetype = "solid", color = "black", size = 0.5) +
-      coord_cartesian(ylim = y_bounds) +
-      theme_bw() +
-      ylab("Total Treated Estimate with 95% Confidence Interval") +
-      xlab("Stage") +
-      theme(
-        panel.grid.major = element_line(color = "gray", linetype = "dashed", size = 0.5),
-        panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)
+      permuted_counts <- read_permutation_counts(
+        i = i,
+        cols = c(perm_treated_col, perm_total_col),
+        initial_path = initial_path
       )
 
-    ggsave(
-      plot = results_plot,
-      filename = file.path(
-        plots_dir,
-        paste0(type, file_stub, "_", batch_name, permutation_suffix, ".pdf")
-      ),
-      device = cairo_pdf,
-      width = 8.22,
-      height = 6.59,
-      units = "in"
-    )
+      permuted_df <- stage_bundle$data |>
+        left_join(permuted_counts, by = c("follower_id", "pais", "batch_id"))
+
+      permuted_df <- poolTreatmentBalance2(permuted_df, perm_treated_col, perm_total_col)
+      permuted_df[[perm_treated_col]] <- NULL
+      permuted_df[[perm_total_col]] <- NULL
+
+      extract_total_treated(
+        data = permuted_df,
+        outcome_vars = stage_bundle$outcome_vars,
+        context_label = paste(batch_name, stage, "permutation", i),
+        allow_missing = TRUE
+      )
+    })
+
+    write_outputs(batch_name, stage, original_coefs, permutation_coefs)
+    stage_summaries[[stage]] <- summarise_stage_results(original_coefs, permutation_coefs, stage)
   }
+
+  final <- bind_rows(stage_summaries) |>
+    mutate(
+      lower = coef - 1.96 * sd,
+      upper = coef + 1.96 * sd
+    )
+
+  final$Variable <- factor(final$Variable, levels = standard_outcome_order)
+  final$Stage <- factor(final$Stage, levels = unname(standard_stage_labels))
+
+  write_xlsx(
+    final |> select(-lower, -upper),
+    file.path(estimates_dir, paste0(type, file_stub, "_", batch_name, permutation_suffix, "_estimates.xlsx"))
+  )
+
+  write_stage_plot(
+    final = final,
+    plot_path = file.path(plots_dir, paste0(type, file_stub, "_", batch_name, permutation_suffix, ".pdf")),
+    ylab_text = "Average treatment effect, with 95% confidence interval",
+    width = 10,
+    height = estimate_plot_height(nlevels(droplevels(final$Variable)))
+  )
 }
-
-
-

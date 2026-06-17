@@ -2,20 +2,13 @@ rm(list = ls())
 rstudioapi::getActiveDocumentContext
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-message("Running followers extensive analyses")
-source("followers_extensive_batches_1000.R")
+# This supplement is limited to follower outcomes observed in batch 1 only.
+# It includes the aggregated SMI-treatment specification and the aggregated
+# ads-treatment specification, but does not run stage-by-stage or batch 2/both
+# batch variants.
 
-message("Running followers extensive strong analyses")
-source("followers_extensive_batches_1000_strong.R")
-
-message("Running followers intensive analyses")
-source("followers_intensive_batches_1000.R")
-
-message("Running followers stage analyses")
-source("followers_stage_batches_1000.R")
-
-message("Running followers aggregate analyses")
+message("Running aggregated follower outcomes for SMI treatment (Batch 1 only)")
 source("followers_aggregate_batches_1000.R")
 
-message("Running followers ads analyses")
+message("Running aggregated follower outcomes for ads treatment (Batch 1 only)")
 source("followers_ads_batches.R")
