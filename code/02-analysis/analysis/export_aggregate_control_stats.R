@@ -100,6 +100,81 @@ load_followers_base_cached <- cache_once(function() {
   load_followers_base_data(initial_path)
 })
 
+load_ads_aggregate_cached <- cache_once(function() {
+  stage_names <- c("stage1_2", "stage3_4", "stage5_6")
+  id_cols <- c("follower_id", "pais", "batch_id")
+  ver_endline_vars <- c(
+    "total_shares",
+    "total_reactions",
+    "total_comments",
+    "verifiability",
+    "non_ver",
+    "true",
+    "fake",
+    "n_posts"
+  )
+  english_endline_vars <- c("eng")
+  sentiment_endline_vars <- c(
+    "pos_b_covid", "neutral_b_covid", "neg_b_covid", "n_posts_covid",
+    "pos_b_vax", "neutral_b_vax", "neg_b_vax", "n_posts_vax"
+  )
+
+  stage_frames <- map(stage_names, function(stage) {
+    ver_df <- get_analysis_ver_final_winsor(
+      stage = stage,
+      batches = "b1b2",
+      initial_path = initial_path
+    ) |>
+      left_join(load_belp90(initial_path), by = c("follower_id", "batch_id", "pais")) |>
+      mutate(strat_block1 = paste0(strat_block1, batch_id, pais)) |>
+      filter(below_p90 == 1) |>
+      filter(n_posts_base > 0) |>
+      filter(total_influencers < 9)
+
+    eng_df <- get_analysis_english_winsor(
+      stage = stage,
+      batches = "b1b2",
+      initial_path = initial_path
+    )
+
+    sent_df <- get_analysis_sent_bert_final2(
+      stage = stage,
+      batches = "b1b2",
+      initial_path = initial_path
+    )
+
+    ver_df |>
+      select(all_of(id_cols), ads_treatment, strat_block1, total_influencers, below_p90, n_posts_base, all_of(ver_endline_vars)) |>
+      left_join(
+        eng_df |>
+          select(all_of(id_cols), all_of(english_endline_vars)),
+        by = id_cols
+      ) |>
+      left_join(
+        sent_df |>
+          select(all_of(id_cols), all_of(sentiment_endline_vars)),
+        by = id_cols
+      )
+  })
+
+  controls <- stage_frames[[1]] |>
+    select(all_of(id_cols), ads_treatment, strat_block1, total_influencers, below_p90, n_posts_base) |>
+    distinct()
+
+  aggregated_outcomes <- bind_rows(stage_frames) |>
+    group_by(across(all_of(id_cols))) |>
+    summarise(
+      across(
+        -all_of(c("ads_treatment", "strat_block1", "total_influencers", "below_p90", "n_posts_base")),
+        \(x) sum(x, na.rm = TRUE)
+      ),
+      .groups = "drop"
+    )
+
+  controls |>
+    left_join(aggregated_outcomes, by = id_cols)
+})
+
 load_standard_baseline_cached <- cache_once(function() {
   id_cols <- c("follower_id", "pais", "batch_id")
 
@@ -197,6 +272,13 @@ sample_variants <- list(
     outcome_cols = standard_outcome_cols,
     label_map = standard_outcome_control_label_map,
     control_filter = function(df) df$total_treated == 0
+  ),
+  ads_intensive_aggregate = list(
+    loader = function() load_ads_aggregate_cached(),
+    batches = batch_specs,
+    outcome_cols = standard_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$ads_treatment == 0
   ),
   extensive_baseline = list(
     loader = function() {

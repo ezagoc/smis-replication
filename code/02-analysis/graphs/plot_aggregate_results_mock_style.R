@@ -74,6 +74,11 @@ figure_specs <- list(
     input_type = "estimates",
     input_dir = file.path(results_root, "intensive_aggregate_batches_strong", "estimates")
   ),
+  ads_intensive_aggregate = list(
+    sample_key = "ads_intensive_aggregate",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "ads_intensive_aggregate", "estimates")
+  ),
   extensive_baseline = list(
     sample_key = "extensive_baseline",
     input_type = "original_permutations",
@@ -196,6 +201,7 @@ is_aggregate_family <- function(sample_key) {
     "extensive_strong",
     "intensive",
     "intensive_strong",
+    "ads_intensive_aggregate",
     "followers_aggregate"
   )
 }
@@ -261,6 +267,10 @@ sample_title <- function(sample_key, include_followers_panel = FALSE) {
     return("Sample-weighted average marginal effect of an additional initially-followed SMI being assigned to treatment on follower outcomes")
   }
 
+  if (sample_key == "ads_intensive_aggregate") {
+    return("Average effect of assignment to receive treatment via paid-for ads on online follower behaviors")
+  }
+
   if (sample_key == "followers_ads") {
     return("Average effect of assignment to receive treatment via paid-for ads on follower outcomes")
   }
@@ -269,7 +279,7 @@ sample_title <- function(sample_key, include_followers_panel = FALSE) {
 }
 
 figure_note <- function(sample_key, batch_code) {
-  sample_note <- if (sample_key %in% c("followers_ads", "ads_intensive_baseline")) {
+  sample_note <- if (sample_key %in% c("followers_ads", "ads_intensive_aggregate", "ads_intensive_baseline")) {
     "The treatment is assignment to receive paid-for ads."
   } else if (sample_key == "intensive_baseline_strong") {
     "The sample is restricted to followers who strongly followed at least one study SMI, and the coefficient is the sample-weighted marginal effect of one additional treated SMI."
@@ -299,7 +309,7 @@ figure_note <- function(sample_key, batch_code) {
 
   batch_note <- paste0("The figure uses the ", tolower(batch_title(batch_code)), " sample.")
 
-  se_note <- if (sample_key %in% c("followers_ads", "ads_intensive_baseline")) {
+  se_note <- if (sample_key %in% c("followers_ads", "ads_intensive_aggregate", "ads_intensive_baseline")) {
     "Whiskers show 95% confidence intervals based on heteroskedasticity-robust standard errors."
   } else {
     "Whiskers show 95% confidence intervals based on permutation standard deviations."
@@ -498,6 +508,8 @@ followers_panel_source <- function(sample_key, batch_code) {
     extensive = "followers_extensive",
     extensive_strong = "followers_extensive_strong",
     intensive = "followers_intensive",
+    ads_intensive_aggregate = "followers_ads",
+    ads_intensive_baseline = "followers_ads",
     NULL
   )
 }
