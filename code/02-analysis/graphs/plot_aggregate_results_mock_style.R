@@ -677,7 +677,6 @@ make_panel_plot <- function(panel_df, sample_key, show_x_title = FALSE) {
 }
 
 build_mock_plot <- function(plot_df, sample_key, batch_code) {
-  include_followers_panel <- any(plot_df$family == "Follower outcomes")
   panel_dfs <- plot_df |>
     group_split(panel_rank, .keep = TRUE)
 
@@ -697,12 +696,8 @@ build_mock_plot <- function(plot_df, sample_key, batch_code) {
 
       wrap_plots(panel_plots, ncol = 1, heights = panel_heights) +
     plot_annotation(
-      title = sample_title(sample_key, include_followers_panel = include_followers_panel),
-      subtitle = sample_subtitle(sample_key, batch_code),
       caption = figure_note(sample_key, batch_code),
       theme = theme(
-        plot.title = element_text(size = 18, face = "bold", hjust = 0),
-        plot.subtitle = element_text(size = 13, color = "grey35", hjust = 0),
         plot.caption = element_text(size = 9.5, hjust = 0, color = "black"),
         plot.margin = margin(t = 8, r = 8, b = 8, l = 8)
       )
