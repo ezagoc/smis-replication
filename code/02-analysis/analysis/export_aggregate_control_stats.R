@@ -100,40 +100,165 @@ load_followers_base_cached <- cache_once(function() {
   load_followers_base_data(initial_path)
 })
 
+load_standard_baseline_cached <- cache_once(function() {
+  id_cols <- c("follower_id", "pais", "batch_id")
+
+  ver_df <- get_analysis_ver_final_winsor(
+    stage = "stage1_2",
+    batches = "b1b2",
+    initial_path = initial_path
+  ) |>
+    left_join(load_belp90(initial_path), by = c("follower_id", "batch_id", "pais"))
+
+  eng_df <- get_analysis_english_winsor(
+    stage = "stage1_2",
+    batches = "b1b2",
+    initial_path = initial_path
+  ) |>
+    select(all_of(id_cols), any_of("eng_base"))
+
+  sent_df <- get_analysis_sent_bert_final2(
+    stage = "stage1_2",
+    batches = "b1b2",
+    initial_path = initial_path
+  ) |>
+    select(
+      all_of(id_cols),
+      any_of(c(
+        "n_posts_covid_base",
+        "pos_b_covid_base",
+        "neutral_b_covid_base",
+        "neg_b_covid_base",
+        "n_posts_vax_base",
+        "pos_b_vax_base",
+        "neutral_b_vax_base",
+        "neg_b_vax_base"
+      ))
+    )
+
+  ver_df |>
+    left_join(eng_df, by = id_cols) |>
+    left_join(sent_df, by = id_cols)
+})
+
 batch_specs <- list(
   b1 = "b1",
   b2 = "b2",
   both = NULL
 )
 
+standard_outcome_cols <- stats::setNames(standard_outcome_roots, standard_outcome_roots)
+standard_baseline_outcome_cols <- c(
+  total_reactions = "total_reactions_base",
+  total_comments = "total_comments_base",
+  total_shares = "total_shares_base",
+  n_posts = "n_posts_base",
+  eng = "eng_base",
+  verifiability = "verifiability_base",
+  non_ver = "non_ver_base",
+  true = "true_base",
+  fake = "fake_base",
+  n_posts_covid = "n_posts_covid_base",
+  pos_b_covid = "pos_b_covid_base",
+  neutral_b_covid = "neutral_b_covid_base",
+  neg_b_covid = "neg_b_covid_base",
+  n_posts_vax = "n_posts_vax_base",
+  pos_b_vax = "pos_b_vax_base",
+  neutral_b_vax = "neutral_b_vax_base",
+  neg_b_vax = "neg_b_vax_base"
+)
+followers_outcome_cols <- c(AC = "AC", SMIs = "SMIs")
+
 sample_variants <- list(
   extensive = list(
     loader = function() load_extensive_aggregate(),
     batches = batch_specs,
-    outcome_roots = standard_outcome_roots,
+    outcome_cols = standard_outcome_cols,
     label_map = standard_outcome_control_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
   extensive_strong = list(
     loader = function() load_extensive_aggregate() |> filter(c_t_strong_total > 0),
     batches = batch_specs,
-    outcome_roots = standard_outcome_roots,
+    outcome_cols = standard_outcome_cols,
     label_map = standard_outcome_control_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
   intensive = list(
     loader = function() load_intensive_aggregate(),
     batches = batch_specs,
-    outcome_roots = standard_outcome_roots,
+    outcome_cols = standard_outcome_cols,
     label_map = standard_outcome_control_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
   intensive_strong = list(
     loader = function() load_intensive_aggregate() |> filter(c_t_strong_total > 0),
     batches = batch_specs,
-    outcome_roots = standard_outcome_roots,
+    outcome_cols = standard_outcome_cols,
     label_map = standard_outcome_control_label_map,
     control_filter = function(df) df$total_treated == 0
+  ),
+  extensive_baseline = list(
+    loader = function() {
+      load_standard_baseline_cached() |>
+        filter(below_p90 == 1) |>
+        filter(total_influencers == 1) |>
+        filter(n_posts_base > 0)
+    },
+    batches = batch_specs,
+    outcome_cols = standard_baseline_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$total_treated == 0
+  ),
+  extensive_baseline_strong = list(
+    loader = function() {
+      load_standard_baseline_cached() |>
+        filter(below_p90 == 1) |>
+        filter(total_influencers == 1) |>
+        filter(n_posts_base > 0) |>
+        filter(c_t_strong_total > 0)
+    },
+    batches = batch_specs,
+    outcome_cols = standard_baseline_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$total_treated == 0
+  ),
+  intensive_baseline = list(
+    loader = function() {
+      load_standard_baseline_cached() |>
+        filter(below_p90 == 1) |>
+        filter(total_influencers < 9) |>
+        filter(n_posts_base > 0)
+    },
+    batches = batch_specs,
+    outcome_cols = standard_baseline_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$total_treated == 0
+  ),
+  intensive_baseline_strong = list(
+    loader = function() {
+      load_standard_baseline_cached() |>
+        filter(below_p90 == 1) |>
+        filter(total_influencers < 9) |>
+        filter(n_posts_base > 0) |>
+        filter(c_t_strong_total > 0)
+    },
+    batches = batch_specs,
+    outcome_cols = standard_baseline_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$total_treated == 0
+  ),
+  ads_intensive_baseline = list(
+    loader = function() {
+      load_standard_baseline_cached() |>
+        filter(below_p90 == 1) |>
+        filter(total_influencers < 9) |>
+        filter(n_posts_base > 0)
+    },
+    batches = batch_specs,
+    outcome_cols = standard_baseline_outcome_cols,
+    label_map = standard_outcome_control_label_map,
+    control_filter = function(df) df$ads_treatment == 0
   ),
   followers_extensive = list(
     loader = function() {
@@ -142,7 +267,7 @@ sample_variants <- list(
         filter(total_influencers == 1)
     },
     batches = list(b1 = "b1"),
-    outcome_roots = c("AC", "SMIs"),
+    outcome_cols = followers_outcome_cols,
     label_map = followers_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
@@ -154,7 +279,7 @@ sample_variants <- list(
         filter(c_t_strong_total > 0)
     },
     batches = list(b1 = "b1"),
-    outcome_roots = c("AC", "SMIs"),
+    outcome_cols = followers_outcome_cols,
     label_map = followers_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
@@ -166,7 +291,7 @@ sample_variants <- list(
         filter(total_influencers < 9)
     },
     batches = list(b1 = "b1"),
-    outcome_roots = c("AC", "SMIs"),
+    outcome_cols = followers_outcome_cols,
     label_map = followers_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
@@ -178,7 +303,7 @@ sample_variants <- list(
         filter(total_influencers < 9)
     },
     batches = list(b1 = "b1"),
-    outcome_roots = c("AC", "SMIs"),
+    outcome_cols = followers_outcome_cols,
     label_map = followers_label_map,
     control_filter = function(df) df$total_treated == 0
   ),
@@ -190,13 +315,13 @@ sample_variants <- list(
         filter(total_influencers < 9)
     },
     batches = list(b1 = "b1"),
-    outcome_roots = c("AC", "SMIs"),
+    outcome_cols = followers_outcome_cols,
     label_map = followers_label_map,
     control_filter = function(df) df$ads_treatment == 0
   )
 )
 
-summarise_controls <- function(data, sample_name, batch_name, batch_filter, outcome_roots, label_map, control_filter) {
+summarise_controls <- function(data, sample_name, batch_name, batch_filter, outcome_cols, label_map, control_filter) {
   analysis_df <- prepare_batch_data(data, batch_filter)
   analysis_df <- analysis_df[control_filter(analysis_df), , drop = FALSE]
 
@@ -204,10 +329,11 @@ summarise_controls <- function(data, sample_name, batch_name, batch_filter, outc
     return(tibble())
   }
 
-  available_roots <- outcome_roots[outcome_roots %in% names(analysis_df)]
+  available_roots <- names(outcome_cols)[unname(outcome_cols) %in% names(analysis_df)]
 
   map_dfr(available_roots, function(outcome_root) {
-    values <- analysis_df[[outcome_root]]
+    outcome_col <- unname(outcome_cols[[outcome_root]])
+    values <- analysis_df[[outcome_col]]
     non_missing <- values[!is.na(values)]
     control_mean <- mean(values, na.rm = TRUE)
     control_sd <- stats::sd(values, na.rm = TRUE)
@@ -264,7 +390,7 @@ control_stats <- imap_dfr(sample_variants, function(spec, sample_name) {
       sample_name = sample_name,
       batch_name = batch_name,
       batch_filter = batch_filter,
-      outcome_roots = spec$outcome_roots,
+      outcome_cols = spec$outcome_cols,
       label_map = spec$label_map,
       control_filter = spec$control_filter
     )

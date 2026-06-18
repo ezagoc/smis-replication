@@ -53,16 +53,81 @@ results_root <- file.path(repo_root, "results")
 stats_path <- file.path(results_root, "aggregate_reference_stats", "aggregate_control_stats.xlsx")
 output_root <- file.path(results_root, "replots", "mock_style_aggregates")
 
-sample_map <- c(
-  extensive_aggregate_batches = "extensive",
-  extensive_aggregate_batches_strong = "extensive_strong",
-  intensive_aggregate_batches = "intensive",
-  intensive_aggregate_batches_strong = "intensive_strong",
-  followers_extensive = "followers_extensive",
-  followers_extensive_strong = "followers_extensive_strong",
-  followers_intensive = "followers_intensive",
-  followers_aggregate = "followers_aggregate",
-  followers_ads = "followers_ads"
+figure_specs <- list(
+  extensive_aggregate_batches = list(
+    sample_key = "extensive",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "extensive_aggregate_batches", "estimates")
+  ),
+  extensive_aggregate_batches_strong = list(
+    sample_key = "extensive_strong",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "extensive_aggregate_batches_strong", "estimates")
+  ),
+  intensive_aggregate_batches = list(
+    sample_key = "intensive",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "intensive_aggregate_batches", "estimates")
+  ),
+  intensive_aggregate_batches_strong = list(
+    sample_key = "intensive_strong",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "intensive_aggregate_batches_strong", "estimates")
+  ),
+  extensive_baseline = list(
+    sample_key = "extensive_baseline",
+    input_type = "original_permutations",
+    original_dir = file.path(results_root, "original"),
+    permutations_dir = file.path(results_root, "permutations")
+  ),
+  extensive_baseline_strong = list(
+    sample_key = "extensive_baseline_strong",
+    input_type = "original_permutations",
+    original_dir = file.path(results_root, "strong", "original"),
+    permutations_dir = file.path(results_root, "strong", "permutations")
+  ),
+  intensive_baseline = list(
+    sample_key = "intensive_baseline",
+    input_type = "original_permutations",
+    original_dir = file.path(results_root, "intensive_baseline_weighted", "original"),
+    permutations_dir = file.path(results_root, "intensive_baseline_weighted", "permutations")
+  ),
+  intensive_baseline_strong = list(
+    sample_key = "intensive_baseline_strong",
+    input_type = "original_permutations",
+    original_dir = file.path(results_root, "intensive_baseline_weighted_strong", "original"),
+    permutations_dir = file.path(results_root, "intensive_baseline_weighted_strong", "permutations")
+  ),
+  ads_intensive_baseline = list(
+    sample_key = "ads_intensive_baseline",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "ads_intensive_baseline", "estimates")
+  ),
+  followers_extensive = list(
+    sample_key = "followers_extensive",
+    input_type = "followers_permutations",
+    input_dir = file.path(results_root, "followers_extensive")
+  ),
+  followers_extensive_strong = list(
+    sample_key = "followers_extensive_strong",
+    input_type = "followers_permutations",
+    input_dir = file.path(results_root, "followers_extensive_strong")
+  ),
+  followers_intensive = list(
+    sample_key = "followers_intensive",
+    input_type = "followers_permutations",
+    input_dir = file.path(results_root, "followers_intensive")
+  ),
+  followers_aggregate = list(
+    sample_key = "followers_aggregate",
+    input_type = "followers_permutations",
+    input_dir = file.path(results_root, "followers_aggregate")
+  ),
+  followers_ads = list(
+    sample_key = "followers_ads",
+    input_type = "estimates",
+    input_dir = file.path(results_root, "followers_ads", "estimates")
+  )
 )
 
 family_colors <- c(
@@ -135,6 +200,16 @@ is_aggregate_family <- function(sample_key) {
   )
 }
 
+is_baseline_family <- function(sample_key) {
+  sample_key %in% c(
+    "extensive_baseline",
+    "extensive_baseline_strong",
+    "intensive_baseline",
+    "intensive_baseline_strong",
+    "ads_intensive_baseline"
+  )
+}
+
 batch_subtitle <- function(batch_code) {
   c(
     b1 = "batch 1",
@@ -194,8 +269,16 @@ sample_title <- function(sample_key, include_followers_panel = FALSE) {
 }
 
 figure_note <- function(sample_key, batch_code) {
-  sample_note <- if (sample_key == "followers_ads") {
+  sample_note <- if (sample_key %in% c("followers_ads", "ads_intensive_baseline")) {
     "The treatment is assignment to receive paid-for ads."
+  } else if (sample_key == "intensive_baseline_strong") {
+    "The sample is restricted to followers who strongly followed at least one study SMI, and the coefficient is the sample-weighted marginal effect of one additional treated SMI."
+  } else if (sample_key == "intensive_baseline") {
+    "The coefficient is the sample-weighted marginal effect of one additional treated initially-followed SMI."
+  } else if (sample_key == "extensive_baseline_strong") {
+    "The sample is restricted to followers who strongly followed at least one study SMI."
+  } else if (sample_key == "extensive_baseline") {
+    "The sample consists of followers who initially followed exactly one study SMI."
   } else if (sample_key == "followers_intensive") {
     "The coefficient is the sample-weighted marginal effect of one additional treated initially-followed SMI."
   } else if (sample_key == "followers_extensive_strong") {
@@ -216,7 +299,7 @@ figure_note <- function(sample_key, batch_code) {
 
   batch_note <- paste0("The figure uses the ", tolower(batch_title(batch_code)), " sample.")
 
-  se_note <- if (sample_key == "followers_ads") {
+  se_note <- if (sample_key %in% c("followers_ads", "ads_intensive_baseline")) {
     "Whiskers show 95% confidence intervals based on heteroskedasticity-robust standard errors."
   } else {
     "Whiskers show 95% confidence intervals based on permutation standard deviations."
@@ -224,6 +307,8 @@ figure_note <- function(sample_key, batch_code) {
 
   spec_note <- if (is_aggregate_family(sample_key)) {
     "This figure reports aggregated treatment-period effects over weeks 1-12."
+  } else if (is_baseline_family(sample_key)) {
+    "This figure reports baseline balance estimates."
   } else {
     "This figure reports the endline follower-outcome specification."
   }
@@ -279,6 +364,10 @@ control_stats <- read_excel_short_path(stats_path)
 
 dir.create(output_root, showWarnings = FALSE, recursive = TRUE)
 
+normalize_outcome_root <- function(outcome_root) {
+  ifelse(outcome_root == "ver", "verifiability", outcome_root)
+}
+
 outcome_label_from_root <- function(outcome_root, sample_key) {
   if (sample_key %in% c(
     "followers_extensive",
@@ -310,17 +399,54 @@ read_standard_estimates <- function(estimates_dir, sample_key) {
       }
 
       estimate_df$Variable <- map_chr(
-        sub("^log_", "", estimate_df$var),
+        normalize_outcome_root(sub("^log_", "", estimate_df$var)),
         outcome_label_from_root,
         sample_key = sample_key
       )
 
       tibble(
         source_path = estimate_path,
-        outcome_root = sub("^log_", "", estimate_df$var),
+        outcome_root = normalize_outcome_root(sub("^log_", "", estimate_df$var)),
         outcome = estimate_df$Variable,
         estimate = estimate_df$coef,
         sd = estimate_df$sd
+      )
+    }
+  ) |>
+    compact()
+}
+
+read_original_permutation_estimates <- function(original_dir, permutations_dir, sample_key) {
+  original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
+
+  map(
+    original_files,
+    function(original_path) {
+      original_df <- read_excel_short_path(original_path)
+      permutations_path <- file.path(permutations_dir, basename(original_path))
+
+      if (nrow(original_df) == 0 || !file.exists(permutations_path)) {
+        return(NULL)
+      }
+
+      permutation_df <- read_excel_short_path(permutations_path)
+      available_outcomes <- intersect(
+        c(standard_outcome_roots, "ver"),
+        names(original_df)
+      )
+
+      if (length(available_outcomes) == 0) {
+        return(NULL)
+      }
+
+      normalized_roots <- normalize_outcome_root(available_outcomes)
+
+      tibble(
+        source_path = original_path,
+        outcome_root = normalized_roots,
+        outcome = map_chr(normalized_roots, outcome_label_from_root, sample_key = sample_key),
+        estimate = map_dbl(available_outcomes, \(root) as.numeric(original_df[[root]][[1]])),
+        sd = map_dbl(available_outcomes, \(root) stats::sd(permutation_df[[root]], na.rm = TRUE))
       )
     }
   ) |>
@@ -391,25 +517,26 @@ read_followers_panel_for_sample <- function(sample_key, batch_code) {
 }
 
 read_saved_plot_inputs <- function(results_subdir) {
-  results_dir <- file.path(results_root, results_subdir)
-  sample_key <- unname(sample_map[[results_subdir]])
+  spec <- figure_specs[[results_subdir]]
+  sample_key <- spec$sample_key
 
-  if (results_subdir %in% c(
-    "followers_extensive",
-    "followers_extensive_strong",
-    "followers_intensive",
-    "followers_aggregate"
-  )) {
-    return(read_followers_permutation_estimates(results_dir))
+  if (identical(spec$input_type, "followers_permutations")) {
+    return(read_followers_permutation_estimates(spec$input_dir))
   }
 
-  estimates_dir <- file.path(results_dir, "estimates")
+  if (identical(spec$input_type, "original_permutations")) {
+    return(read_original_permutation_estimates(
+      original_dir = spec$original_dir,
+      permutations_dir = spec$permutations_dir,
+      sample_key = sample_key
+    ))
+  }
 
-  if (!dir.exists(estimates_dir)) {
+  if (!dir.exists(spec$input_dir)) {
     return(list())
   }
 
-  read_standard_estimates(estimates_dir, sample_key)
+  read_standard_estimates(spec$input_dir, sample_key)
 }
 
 mock_output_name <- function(source_path) {
@@ -704,8 +831,8 @@ build_mock_plot <- function(plot_df, sample_key, batch_code) {
     )
 }
 
-for (results_subdir in names(sample_map)) {
-  sample_key <- unname(sample_map[[results_subdir]])
+for (results_subdir in names(figure_specs)) {
+  sample_key <- figure_specs[[results_subdir]]$sample_key
   output_dir <- file.path(output_root, results_subdir)
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 

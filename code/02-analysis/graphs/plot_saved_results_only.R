@@ -466,7 +466,6 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, x
       geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(xlim = x_bounds) +
       labs(
-        title = family_title(family_key, batch_label),
         x = xlab_text,
         y = NULL,
         caption = family_note(family_key, batch_label)
@@ -475,7 +474,6 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, x
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank(),
-        plot.title = element_text(face = "bold"),
         plot.caption = element_text(hjust = 0)
       )
 
@@ -518,7 +516,6 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
       geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(xlim = x_bounds) +
       labs(
-        title = family_title(family_key, batch_label),
         x = xlab_text,
         y = NULL,
         caption = family_note(family_key, batch_label)
@@ -527,7 +524,6 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank(),
-        plot.title = element_text(face = "bold"),
         plot.caption = element_text(hjust = 0)
       )
 
@@ -567,7 +563,6 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
     coord_cartesian(xlim = x_bounds) +
     facet_wrap(~Batch, nrow = 1) +
     labs(
-      title = family_title(family_key),
       x = "Average treatment effect, with 95% confidence interval",
       y = NULL,
       caption = family_note(family_key)
@@ -576,7 +571,6 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
-      plot.title = element_text(hjust = 0.5, face = "bold"),
       plot.caption = element_text(hjust = 0)
     )
 
@@ -640,7 +634,6 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Average
       geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
       coord_cartesian(ylim = y_bounds) +
       labs(
-        title = family_title(family_key, batch_label),
         y = ylab_text,
         x = "Treatment stage",
         caption = family_note(family_key, batch_label)
@@ -650,7 +643,6 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Average
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
         panel.grid.minor = element_blank(),
         axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(face = "bold"),
         plot.caption = element_text(hjust = 0)
       )
 
@@ -712,7 +704,6 @@ plot_combined_stage_family <- function(estimates_dir, output_path, family_title_
     coord_cartesian(ylim = y_bounds) +
     facet_wrap(~Batch, nrow = 1) +
     labs(
-      title = family_title(family_key),
       y = ylab_text,
       x = "Treatment stage",
       caption = family_note(family_key)
@@ -722,7 +713,6 @@ plot_combined_stage_family <- function(estimates_dir, output_path, family_title_
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
       axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(hjust = 0.5, face = "bold"),
       plot.caption = element_text(hjust = 0)
     )
 

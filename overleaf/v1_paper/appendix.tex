@@ -1,3 +1,5 @@
+\section{Supplementary Appendix}
+
 \subsection{Influencer Recruitment}
 \label{app:inf_recruit}
 
@@ -25,215 +27,6 @@ Std. Dev. [Followers] &  & 55,361.358 & 18,352.048 & 695.712 & 30,804.893 \\
 \end{tabular}
 \end{table}
 
-
-\subsection{Influencer Randomization}
-\label{app:inf_rand}
-
-\subsubsection*{Pilot}
-
-To understand the effects in the spread of misinformation content we divided the pilot influencers in groups of 10 (treated and control for both countries). We used blocks of size 4 and 2, and the following covariates for the randomization (like\_count\_sum, quote\_count\_sum and reply\_count\_sum were used together to create an index).\\
-
-\begin{itemize}
-    \item \textit{followers\_count}: Number of users who follow the user.
-    \item \textit{listed\_count}: Number of lists that include the user.
-    \item \textit{n\_tweets.na}: Total tweets in the last 6 months with link to news article.
-    \item \textit{n\_tweets}: Total tweets in the last 6 months
-    \item \textit{n\_strong}: number of strong ties
-    \item \textit{n\_weak}: number of weak ties
-    \item \textit{n\_absent}: number of absent ties
-    \item \textit{days\_old\_account} Days since creation of account (until november 28, 2022)
-    \item \textit{like\_count\_sum}: Total likes in the last 6 months (input for index\_interactions).
-    \item \textit{quote\_count\_sum}: Total quotes in the last 6 months (input for index\_interactions).
-    \item \textit{reply\_count\_sum}: Total replies in the last 6 months (input for index\_interactions).
-\end{itemize} 
-
-The randomization for both countries led to the following balance tables:
-
-\input{Tables/KE/Influencer_Rand_Pilot}
-\input{Tables/SA/Influencer_Rand_Pilot}
-
-\newpage
-\subsubsection*{Batch 1}
-
-For the batch 1 we divided the influencers in groups of 38 (treated and control for both countries). We used blocks of size 4 and 2, and the same covariates as in the pilot. We obtained the following balance tables:
-
-\input{Tables/KE/Influencer_Rand}
-\input{Tables/SA/Influencer_Rand}
-
-\subsubsection*{Batch 2}
-
-Finally, for Batch 2 we divided in groups of 21 treated and control influencers for South Africa and 24 for Kenya. We used blocks of size 4 and 2, and the aforementioned variables to randomize.\\
-
-\input{Tables/KE/Influencer_Rand_Batch2}
-\input{Tables/SA/Influencer_Rand_Batch2}
-
-\newpage
-
-\subsection{Follower Randomization}
-\label{app:foll_rand}
-
-\subsubsection*{Pilot}
-
-For the followers we first stratified the followers using the quartiles they were in (terciles for Kenya) for the following covariates and then used blocks of size 4 and 2 for the randomization\footnote{All subsets of the followers smaller than 3, were pooled together and stratified again but without using the index\_influence covariate and using a smaller group (e.g. if we used quartiles, then for the pooled ones we used terciles). We also ran normal randomization for the subsets that had a singular matrix.}:\\
-
-\begin{itemize}
-    \item \textit{n\_strong}: number of strong ties to an influencer
-    \item \textit{n\_weak}: number of weak ties to an influencer
-    \item \textit{n\_absent}: number of absent ties to an influencer
-    \item \textit{n\_strong\_treated}: number of strong ties to a treated influencer influencer
-    \item \textit{n\_weak\_treated}: number of weak ties to a treated influencer
-    \item \textit{n\_absent\_treated}: number of absent ties to a treated influencer
-    \item \textit{days\_old\_account} Days since creation of account (until november 28, 2022)
-    \item \textit{like\_count\_sum}: Total likes in the last 6 months (input for index\_interactions).
-    \item \textit{quote\_count\_sum}: Total quotes in the last 6 months (input for index\_interactions).
-    \item \textit{reply\_count\_sum}: Total replies in the last 6 months (input for index\_interactions).
-\end{itemize}
-
-The balance table for the followers of South African and Kenyan influencers turned out as follows. For the F Test we obtained a P Value of 0.992 for both countries. \\
-
-\input{Tables/KE/Follower_Rand_Pilot}
-\input{Tables/SA/Follower_Rand_Pilot}
-\newpage
-\subsubsection*{Batch 1}
-
-For the follower randomization, in this case, given the number of followers and the stratification variables, we used the median of each variable to stratify and then, as in the pilot, blocks of size 4 and 2 inside each strata. For subsets that had singular matrix, we used normal randomization. The balance tables of this randomization were the following ones:\\
-
-\input{Tables/KE/Follower_Rand}
-\input{Tables/SA/Follower_Rand}
-
-
-\subsubsection*{Batch 2}
-
-Finally, for Batch 2, given the number of followers and the stratification variables, we used the median of each variable to stratify and then, as in the pilot, blocks of size 4 and 2 inside each strata. For subsets that had a singular matrix, we used normal randomization.
-
-\input{Tables/KE/Follower_Rand_Batch2}
-\input{Tables/SA/Follower_Rand_Batch2}
-
-
-\subsection{Influencer Compliance and Follower interest in Material}\label{compliance}
-
-\begin{figure}[!htpb]
-	\centering
-	\caption{Influencer Compliance in \#FactsMatter Campaigns}
-	\includegraphics[width=14.3cm]{Plots/plots_gates_report/compliance_pooled.png}
-	\label{fig:compliance_pooled}
-        \floatfoot{\textit{Notes:} Extensive represents the share of influencers who posted at least one piece of intervention materials. Intensive represents the percentage of the actually posted, relative to the planned, intervention Tweets.}
-\end{figure}
-
-
-\begin{figure}[!htpb]
-	\centering
-	\caption{Influencer Compliance in \#FactsMatter Campaigns}
-	\includegraphics[width=14.3cm]{Plots/plots_gates_report/compliance_pooled_v2.png}
-	\label{fig:compliance_pooled_country}
-        \floatfoot{\textit{Notes:} Extensive represents the share of influencers who posted at least one piece of intervention materials. Intensive represents the percentage of the actually posted, relative to the planned, intervention Tweets.}
-\end{figure}
-
-
-\begin{figure}[!htpb]
-	\centering
-	\caption{Influencer Compliance in \#FactsMatter Campaigns}
-	\includegraphics[width=14.3cm]{Plots/plots_gates_report/compliance_pilot.png}
-	\label{fig:compliance_smi_pilot}
-        \floatfoot{\textit{Notes:} Extensive represents the share of influencers who posted at least one piece of intervention materials. Intensive represents the percentage of the actually posted, relative to the planned, intervention Tweets.}
-\end{figure}
-
-
-
-\begin{table}[h!]
-\centering
-\caption{Interactions with influencers's posts (Tweets with digital literacy content)}
-\label{tab:smi_dl_ap}
-\begin{tabular}{lccccccc}
-  \hline
- \bfseries{Country} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
-  \hline
-  Kenya & Retweets & 0 & 0 & 203 & 2.164 & 10.228 & 1,058\\
- & Replies & 0 & 0 & 11 & 0.137 & 0.659 & 67\\ 
- & Likes &  0 & 1 & 210 & 2.71 & 10.384 & 1,325\\ 
- & Impressions &  0 & 108.5 & 4,928 & 245.602 & 388.436 & 116,661
- \\\hline \\[-1.8ex] 
- South Africa & Retweets & 0 & 0 & 175 & 1.49 & 10.883 & 392 \\ 
- & Replies & 0 & 0 & 6 & 0.183 & 0.652 & 48\\ 
- & Likes &  0 & 0 & 394 & 3.141 & 24.445 & 826\\ 
- & Impressions & 0 & 129 & 70,983 & 692.829 & 4,536.792 & 178,057\\
-   \hline\\
-   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} Pilot, Batch 1 and 2. Statistics on Impressions only include tweets from Week 5 in the pilot since impressions were not reported before}} \\
-
-\end{tabular}
-\end{table}
-
-\begin{table}[h!]
-\centering
-\caption{Interactions with influencers's posts (Tweets with fact checks)}
-\label{tab:smi_fc_ap}
-\begin{tabular}{lccccccc}
-  \hline
- \bfseries{Country} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
-  \hline
-  Kenya & Retweets & 0 & 0 & 72 & 1.443 & 4.673 & 704\\
- & Replies & 0 & 0 & 4 & 0.117 & 0.454 & 57\\ 
- & Likes &  0 & 1 & 47 & 1.801	 & 4.397 & 879\\ 
- & Impressions &  0 & 77 & 2,626 & 164.624 & 269.354 & 76,715
- \\\hline \\[-1.8ex] 
- South Africa & Retweets & 0 & 0 & 17 & 0.417 & 1.56 & 101 \\ 
- & Replies & 0 & 0 & 4 & 0.165 & 0.567 & 40\\ 
- & Likes &  0 & 0 & 16 & 0.822 & 1.703 & 199\\ 
- & Impressions & 0 & 101 & 31,226 & 425.979 & 2,200.214 & 101,809\\
-   \hline\\
-   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} Pilot, Batch 1 and 2. Statistics on Impressions only include tweets from Week 5 in the pilot since impressions were not reported before}} \\
-
-\end{tabular}
-\end{table}
-
-
-\begin{table}[h!]
-\centering
-\caption{Interactions with Twitter ads (with fact checks)}
-\label{tab:ads_fc_ap}
-\begin{tabular}{lccccccc}
-  \hline
- \bfseries{Campaign} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
-  \hline
-  Kenya & Retweets & 1 & 3 & 12 & 4.167 & 3.971 & 25 \\ 
- & Replies & 0 & 0 & 0 & 0 & 0 & 0\\ 
- & Likes &  16 & 33 & 43 & 31 & 9.381 & 186\\ 
- & Impressions &  9,735 & 10,543.5 & 19,353 & 11,950.5 & 3,668.406 & 71,703\\
- \hline \\[-1.8ex] 
- South Africa & Retweets & 1 & 11 & 13 & 7.571 & 5.563 & 53 \\ 
- & Replies & 0 & 0 & 0  & 0 & 0 & 0\\ 
- & Likes &  4 & 19 & 34 & 18.143 & 11.320 & 127\\ 
- & Impressions & 8,857 & 18,148 & 23,863 & 17,151.857 & 5,390.128 & 120,063\\
-   \hline\\
-   \multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} For each country we posted 2 Ads weekly for an eight week period. Out of the 16 intended Ads, 3 were blocked by Twitter(X). Therefore, we were able to only post 6 Ads for Kenya and 7 for South Africa containing a fact check as the tweet content.}} \\
-
-\end{tabular}
-\end{table}
-
-\begin{table}[h!]
-\centering
-\caption{Interactions with Twitter ads (with digital literacy content)}
-\label{tab:ads_dl_ap}
-\begin{tabular}{lccccccc}
-  \hline
- \bfseries{Campaign} & \bfseries{Engagement Metric} & \bfseries{Min} & \bfseries{Median} & \bfseries{Max} & \bfseries{Mean} & \bfseries{Std} & \bfseries{Count} \\ 
-  \hline
-  Kenya & Retweets & 0 & 2 & 8 & 2.75 & 3.151 & 22 \\ 
- & Replies & 0 & 0 & 0 & 0 & 0 & 0\\ 
- & Likes &  7 & 15.5 & 23 & 16 & 5.952 & 128\\ 
- & Impressions &  8,989 & 10,321.5 & 19,629 & 12,203 & 4,292.71 & 97,624\\
- & Video Views & 1,532 & 1,668 & 3,246 & 1,959.75 & 586.045 & 15,678
- \\\hline \\[-1.8ex] 
- South Africa & Retweets & 0 & 5 & 6 & 3.75 & 2.605 & 30 \\ 
- & Replies & 0 & 0 & 0 & 0 & 0 & 0\\ 
- & Likes &  3 & 10 & 16 & 9.375 & 5.012 & 75\\ 
- & Impressions & 8,476 & 18,247 & 23,786 & 17,537 & 5,462.854 & 140,296\\
- & Video Views & 1,805 & 3,002 & 4,570 & 3,003.875 & 940.328 & 24,031\\
-   \hline\\
-   %\multicolumn{8}{l} {\parbox[t]{17cm}{ \textit{Notes:} For each country and for each audience -- Pilot, First Batch and Second Batch, we posted 2 Ads weekly for an eight week period. Out of the 96 intended Ads, only 3 were blocked by Twitter. Therefore, we were able to post 24 Ads for Kenya and 24 for South Africa containing digital literacy content.}} \\
-
-\end{tabular}
-\end{table}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ML Models
@@ -279,7 +72,7 @@ Type & Label & Number &  Percent \\
 \begin{figure}[h]
     \centering
     \caption{Verifiability Model: Confusion matrix \label{fig:ver2}}
-    \includegraphics[width=10cm, height=9cm]{Figures/cm_bert_2class_linear_drop3.pdf}
+    \includegraphics[width=10cm, height=9cm]{../results/desc_stats/cm_bert_2class_linear_drop3.pdf}
 \end{figure}
 
 \newpage
@@ -312,7 +105,7 @@ As with the verifiability model, after training several models using BERT, we de
     \centering
     \caption{Fake model: Confusion matrix \label{fig:fake2}}
     \label{fig:fig2}
-    \includegraphics[width=10cm, height=8cm]{Figures/fake_bert_linear_drop.pdf}
+    \includegraphics[width=10cm, height=8cm]{../results/desc_stats/fake_bert_linear_drop.pdf}
 \end{figure}
 
 For both models we checked the cross-validation accuracy to discard that our results were influenced by the size of our training data set and/or the sampling to split training and validation. For both cases we obtained validation accuracies close to 85$\%$, which ruled out any concern about the validity of the results.\\
@@ -353,7 +146,7 @@ Given these, we decided to stick to the 5 Topic Model, since it yielded the most
 
 \begin{figure}[htbp]
     \centering
-\includegraphics[width=0.98\textwidth]{Figures/5Topics.pdf} 
+\includegraphics[width=0.98\textwidth]{../results/desc_stats/5Topics.pdf} 
         \caption{LDA Model 5 Topic Word Scores} 
     \label{fig:LDAmodel}
 \end{figure}
@@ -374,14 +167,14 @@ We obtained 92\% of validation accuracy and a test accuracy of 89\%, calculated 
     \centering
     \caption{Learning Curve: BERT Base}
     \label{fig:lc_BERT_base}
-    \includegraphics[width=18cm, height=9cm]{Sentiment_Training/accuracy_3classes_2.pdf}
+    \includegraphics[width=18cm, height=9cm]{../results/desc_stats/accuracy_3classes_2.pdf}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \caption{Confusion Matrix: BERT Base}
     \label{fig:conf_BERT_base}
-    \includegraphics[width=14cm, height=10cm]{Sentiment_Training/confusion_3classes_2.pdf}
+    \includegraphics[width=14cm, height=10cm]{../results/desc_stats/confusion_3classes_2.pdf}
 \end{figure}
 
 \newpage
