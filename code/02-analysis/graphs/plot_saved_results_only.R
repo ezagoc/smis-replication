@@ -569,7 +569,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
       axis.text.y = element_text(size = 8.5),
       axis.title = element_text(size = 9.5),
       strip.text = element_text(face = "bold", size = 9),
-      legend.position = "bottom",
+      legend.position = "right",
       legend.text = element_text(size = 8.2),
       panel.spacing = unit(0.75, "lines"),
       legend.box = "vertical",
