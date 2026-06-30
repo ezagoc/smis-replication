@@ -36,16 +36,16 @@ library(grid)
 df <- tribble(
   ~panel, ~family, ~outcome, ~estimate, ~ci_low, ~ci_high, ~control_mean, ~control_sd, ~outcome_range,
   
-  "Panel A.", "Overall engagement", "log(Total reactions)", -0.14, -0.25, -0.04, 3.45, 1.21, "(0.00, 9.73)",
-  "Panel A.", "Overall engagement", "log(Total comments)",  -0.11, -0.20,  0.04, 2.31, 1.08, "(0.00, 8.64)",
-  "Panel A.", "Overall engagement", "log(Total shares)",    -0.08, -0.18,  0.05, 2.87, 1.23, "(0.00, 8.92)",
+  "Panel B.", "Overall engagement", "log(Total reactions)", -0.14, -0.25, -0.04, 3.45, 1.21, "(0.00, 9.73)",
+  "Panel B.", "Overall engagement", "log(Total comments)",  -0.11, -0.20,  0.04, 2.31, 1.08, "(0.00, 8.64)",
+  "Panel B.", "Overall engagement", "log(Total shares)",    -0.08, -0.18,  0.05, 2.87, 1.23, "(0.00, 8.92)",
   
-  "Panel B.", "Posting and veracity behavior", "log(Number of posts + shares)",          -0.08,  -0.16,  0.04, 1.98, 0.92, "(0.00, 7.18)",
-  "Panel B.", "Posting and veracity behavior", "log(Number of posts + shares, English)", -0.07,  -0.17,  0.04, 1.41, 0.81, "(0.00, 6.32)",
-  "Panel B.", "Posting and veracity behavior", "log(Verifiable posts + shares)",         -0.08,  -0.19,  0.05, 1.67, 0.89, "(0.00, 6.75)",
-  "Panel B.", "Posting and veracity behavior", "log(Non-verifiable posts + shares)",     -0.10,  -0.20,  0.02, 0.87, 0.73, "(0.00, 5.61)",
-  "Panel B.", "Posting and veracity behavior", "log(True posts + shares)",               -0.11,  -0.22,  0.04, 1.52, 0.86, "(0.00, 6.23)",
-  "Panel B.", "Posting and veracity behavior", "log(Fake posts + shares)",               -0.085, -0.20,  0.00, 0.38, 0.60, "(0.00, 3.84)",
+  "Panel A.", "Posting and veracity behavior", "log(Number of posts + shares)",          -0.08,  -0.16,  0.04, 1.98, 0.92, "(0.00, 7.18)",
+  "Panel A.", "Posting and veracity behavior", "log(Number of posts + shares, English)", -0.07,  -0.17,  0.04, 1.41, 0.81, "(0.00, 6.32)",
+  "Panel A.", "Posting and veracity behavior", "log(Verifiable posts + shares)",         -0.08,  -0.19,  0.05, 1.67, 0.89, "(0.00, 6.75)",
+  "Panel A.", "Posting and veracity behavior", "log(Non-verifiable posts + shares)",     -0.10,  -0.20,  0.02, 0.87, 0.73, "(0.00, 5.61)",
+  "Panel A.", "Posting and veracity behavior", "log(True posts + shares)",               -0.11,  -0.22,  0.04, 1.52, 0.86, "(0.00, 6.23)",
+  "Panel A.", "Posting and veracity behavior", "log(Fake posts + shares)",               -0.085, -0.20,  0.00, 0.38, 0.60, "(0.00, 3.84)",
   
   "Panel C.", "COVID-19 content", "log(COVID posts + shares)",                 0.000, -0.008, 0.015, 0.74, 0.62, "(0.00, 3.49)",
   "Panel C.", "COVID-19 content", "log(Positive COVID posts + shares)",        0.001, -0.007, 0.011, 0.29, 0.50, "(0.00, 2.60)",
@@ -61,8 +61,8 @@ df <- tribble(
     family = factor(
       family,
       levels = c(
-        "Overall engagement",
         "Posting and veracity behavior",
+        "Overall engagement",
         "COVID-19 content"
       )
     )

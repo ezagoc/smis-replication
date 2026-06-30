@@ -63,9 +63,9 @@ run_isolated_source <- function(path) {
 }
 
 scripts_to_run <- c(
-  "../attrition/run_all_attrition_tables.R",
-  "../graphs/plot_saved_results_only.R",
-  "../graphs/plot_aggregate_results_mock_style.R"
+  #"../attrition/run_all_attrition_tables.R",
+  #"../graphs/plot_aggregate_results_mock_style.R",
+  "../graphs/plot_saved_results_only.R"
 )
 
 invisible(lapply(scripts_to_run, run_isolated_source))
