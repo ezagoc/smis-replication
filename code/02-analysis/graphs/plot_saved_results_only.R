@@ -497,10 +497,10 @@ preferred_xlsx_files <- function(paths) {
 
 estimate_stage_panel_height <- function(n_outcomes, has_batch_facets = FALSE) {
   if (has_batch_facets) {
-    return(max(4.8, 0.46 * n_outcomes + 2.1))
+    return(max(4.8, 0.24 * n_outcomes + 2.2))
   }
 
-  max(4.1, 0.54 * n_outcomes + 1.9)
+  max(4.2, 0.2 * n_outcomes + 2.1)
 }
 
 plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_facets = FALSE) {
@@ -508,71 +508,72 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
     return(invisible(NULL))
   }
 
-  stage_shapes <- c(
-    "Weeks 1-4" = 16,
-    "Weeks 5-8" = 17,
-    "Weeks 9-12" = 15
-  )
-  stage_offsets <- c(
-    "Weeks 1-4" = 0.28,
-    "Weeks 5-8" = 0,
-    "Weeks 9-12" = -0.28
-  )
-
   variable_levels <- ordered_stage_labels(final$var, as.character(final$Variable))
-  y_breaks <- rev(seq_along(variable_levels))
+  n_outcomes <- length(variable_levels)
+
+  if (n_outcomes > length(shape_palette)) {
+    stop(
+      "plot_stage_panel_facets only has ",
+      length(shape_palette),
+      " point shapes configured, but received ",
+      n_outcomes,
+      " outcomes."
+    )
+  }
+
+  variable_shapes <- setNames(shape_palette[seq_len(n_outcomes)], variable_levels)
+  variable_offsets <- setNames(seq(-0.28, 0.28, length.out = n_outcomes), variable_levels)
+  stage_positions <- setNames(seq_along(levels(final$Stage)), levels(final$Stage))
 
   final <- final |>
     mutate(
       Variable = as.character(Variable),
-      y_base = y_breaks[match(Variable, variable_levels)],
-      y = y_base + unname(stage_offsets[as.character(Stage)])
+      Stage = factor(Stage, levels = unname(stage_map)),
+      x_base = unname(stage_positions[as.character(Stage)]),
+      x = x_base + unname(variable_offsets[Variable])
     ) |>
-    arrange(desc(y_base), Stage)
+    arrange(Stage, Variable)
 
-  x_bounds <- axis_bounds(final$lower, final$upper)
-  n_outcomes <- length(variable_levels)
+  y_bounds <- axis_bounds(final$lower, final$upper, pad_fraction = 0.1, min_pad = 0.02)
   plot_height <- estimate_stage_panel_height(n_outcomes, has_batch_facets = has_batch_facets)
-  separator_df <- tibble(y = seq_len(max(0, n_outcomes - 1)) + 0.5)
+  x_limits <- c(min(final$x) - 0.18, max(final$x) + 0.18)
 
-  results_plot <- ggplot(final, aes(x = coef, y = y, shape = Stage)) +
-    geom_hline(
-      data = separator_df,
-      aes(yintercept = y),
-      inherit.aes = FALSE,
-      linewidth = 0.35,
-      color = "grey85"
+  results_plot <- ggplot(final, aes(x = x, y = coef, shape = Variable)) +
+    geom_vline(
+      xintercept = seq_along(levels(final$Stage)),
+      color = "grey88",
+      linewidth = 0.4
     ) +
-    geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
-    geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0, linewidth = 0.7) +
-    geom_point(size = 2.3) +
-    scale_shape_manual(values = stage_shapes, drop = FALSE) +
-    scale_y_continuous(
-      breaks = y_breaks,
-      labels = variable_levels,
-      limits = c(0.35, n_outcomes + 0.65)
+    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0, linewidth = 0.7) +
+    geom_point(size = 2.5) +
+    scale_shape_manual(values = variable_shapes, limits = variable_levels, drop = FALSE) +
+    scale_x_continuous(
+      breaks = seq_along(levels(final$Stage)),
+      labels = levels(final$Stage),
+      limits = x_limits
     ) +
-    coord_cartesian(xlim = x_bounds, clip = "off") +
+    coord_cartesian(ylim = y_bounds, clip = "off") +
     labs(
-      x = ylab_text,
-      y = NULL,
-      shape = "Stage"
+      x = "Treatment stage",
+      y = ylab_text,
+      shape = "Outcome"
     ) +
-    guides(shape = guide_legend(override.aes = list(size = 2.8))) +
+    guides(shape = guide_legend(override.aes = list(size = 2.8), ncol = if (n_outcomes > 6) 2 else 1)) +
     theme_bw() +
     theme(
-      panel.grid.major.y = element_blank(),
-      panel.grid.major.x = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
       axis.text.x = element_text(size = 8.5),
-      axis.text.y = element_text(size = 8.5, margin = margin(r = 8)),
+      axis.text.y = element_text(size = 8.5),
       axis.title = element_text(size = 9.5),
       strip.text = element_text(face = "bold", size = 9),
       legend.position = "bottom",
-      legend.title = element_text(size = 8.5),
       legend.text = element_text(size = 8.2),
       panel.spacing = unit(0.75, "lines"),
-      plot.margin = margin(t = 6, r = 18, b = 6, l = 10)
+      legend.box = "vertical",
+      plot.margin = margin(t = 6, r = 10, b = 6, l = 8)
     )
 
   if (has_batch_facets && "Batch" %in% names(final)) {
@@ -584,7 +585,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
     plot = results_plot,
     filename = output_path,
     device = cairo_pdf,
-    width = if (has_batch_facets) 11.8 else 9.2,
+    width = if (has_batch_facets) 12.2 else 8.8,
     height = plot_height,
     units = "in"
   )
