@@ -64,8 +64,8 @@ run_isolated_source <- function(path) {
 
 scripts_to_run <- c(
   #"00-preprocess_attrition_data.R",
-  #"01-attrition_ads.R",
-  #"02-attrition_extensive.R",
+  "01-attrition_ads.R",
+  "02-attrition_extensive.R",
   "03-attrition_intensive.R",
   "04-sample_restriction_balance.R"
 )
