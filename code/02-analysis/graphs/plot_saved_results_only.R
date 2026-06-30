@@ -108,6 +108,35 @@ horizontal_order <- c("SMIs", "AC", standard_outcome_roots, paste0("log_", stand
 stage_label_map <- c(AC = "Follows Africa Check", SMIs = "Number of SMIs followed", standard_outcome_label_map)
 stage_order <- c("SMIs", "AC", standard_outcome_roots)
 stage_map <- standard_stage_labels
+standard_stage_panel_defs <- tribble(
+  ~var,                ~panel_key, ~panel_label,
+  "total_reactions",   "panel_a",  "Panel A. Overall engagement",
+  "total_comments",    "panel_a",  "Panel A. Overall engagement",
+  "total_shares",      "panel_a",  "Panel A. Overall engagement",
+  "n_posts",           "panel_b",  "Panel B. Posting and veracity behavior",
+  "eng",               "panel_b",  "Panel B. Posting and veracity behavior",
+  "verifiability",     "panel_b",  "Panel B. Posting and veracity behavior",
+  "non_ver",           "panel_b",  "Panel B. Posting and veracity behavior",
+  "true",              "panel_b",  "Panel B. Posting and veracity behavior",
+  "fake",              "panel_b",  "Panel B. Posting and veracity behavior",
+  "n_posts_covid",     "panel_c",  "Panel C. COVID-19 content",
+  "pos_b_covid",       "panel_c",  "Panel C. COVID-19 content",
+  "neutral_b_covid",   "panel_c",  "Panel C. COVID-19 content",
+  "neg_b_covid",       "panel_c",  "Panel C. COVID-19 content",
+  "n_posts_vax",       "panel_c",  "Panel C. COVID-19 content",
+  "pos_b_vax",         "panel_c",  "Panel C. COVID-19 content",
+  "neutral_b_vax",     "panel_c",  "Panel C. COVID-19 content",
+  "neg_b_vax",         "panel_c",  "Panel C. COVID-19 content"
+)
+followers_stage_panel_defs <- tribble(
+  ~var,    ~panel_key, ~panel_label,
+  "SMIs",  "panel_a",  "Panel A. Follower outcomes",
+  "AC",    "panel_a",  "Panel A. Follower outcomes"
+)
+
+normalize_outcome_var <- function(var_name) {
+  ifelse(var_name == "ver", "verifiability", var_name)
+}
 
 axis_bounds <- function(lower, upper, pad_fraction = 0.08, min_pad = 0.02) {
   lo <- min(lower, na.rm = TRUE)
@@ -311,6 +340,7 @@ build_horizontal_plot_data <- function(original_path, permutation_path) {
       by = "var"
     ) |>
     mutate(
+      var = normalize_outcome_var(var),
       Variable = vapply(var, resolve_label, character(1)),
       lower = coef - 1.96 * sd,
       upper = coef + 1.96 * sd
@@ -333,6 +363,8 @@ build_estimate_only_horizontal_data <- function(estimate_path) {
   if (!"var" %in% names(final)) {
     final$var <- final$Variable
   }
+
+  final$var <- normalize_outcome_var(final$var)
 
   if (!"Variable" %in% names(final)) {
     final$Variable <- vapply(final$var, resolve_label, character(1))
@@ -395,6 +427,8 @@ build_stage_plot_data <- function(estimate_path) {
     final$var <- final$Variable
   }
 
+  final$var <- normalize_outcome_var(final$var)
+
   if (!"Variable" %in% names(final)) {
     final$Variable <- vapply(final$var, resolve_stage_label, character(1))
   } else {
@@ -414,6 +448,92 @@ build_stage_plot_data <- function(estimate_path) {
   final$Variable <- factor(final$Variable, levels = ordered_stage_labels(final$var, final$Variable))
   final$Stage <- factor(final$Stage, levels = unname(stage_map))
   final
+}
+
+stage_panel_definitions <- function(vars) {
+  normalized_vars <- unique(normalize_outcome_var(as.character(vars)))
+
+  if (length(normalized_vars) > 0 && all(normalized_vars %in% followers_stage_panel_defs$var)) {
+    return(followers_stage_panel_defs)
+  }
+
+  standard_stage_panel_defs
+}
+
+split_stage_panel_data <- function(final) {
+  defs <- stage_panel_definitions(final$var)
+  panel_list <- final |>
+    mutate(var = normalize_outcome_var(as.character(var))) |>
+    left_join(defs, by = "var") |>
+    filter(!is.na(panel_key)) |>
+    group_split(panel_key, .keep = TRUE)
+
+  set_names(panel_list, map_chr(panel_list, \(d) d$panel_key[[1]]))
+}
+
+panel_output_path <- function(path, panel_key) {
+  stem <- sub("\\.pdf$", "", path)
+  paste0(stem, "_", panel_key, ".pdf")
+}
+
+estimate_stage_panel_height <- function(n_outcomes, has_batch_facets = FALSE) {
+  if (has_batch_facets) {
+    return(max(5.5, 1.8 * n_outcomes + 1.5))
+  }
+
+  n_cols <- min(3, max(1, n_outcomes))
+  n_rows <- ceiling(n_outcomes / n_cols)
+  max(4.8, 2.75 * n_rows + 1.0)
+}
+
+plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_facets = FALSE) {
+  if (nrow(final) == 0) {
+    return(invisible(NULL))
+  }
+
+  final <- final |>
+    mutate(
+      Variable = factor(as.character(Variable), levels = ordered_stage_labels(var, as.character(Variable)))
+    ) |>
+    arrange(Variable, Stage)
+
+  y_bounds <- axis_bounds(final$lower, final$upper)
+  n_outcomes <- nlevels(droplevels(final$Variable))
+  plot_height <- estimate_stage_panel_height(n_outcomes, has_batch_facets = has_batch_facets)
+
+  results_plot <- ggplot(final, aes(x = Stage, y = coef, group = 1)) +
+    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
+    geom_point(size = 2.2) +
+    geom_linerange(aes(ymin = lower, ymax = upper), linewidth = 0.9) +
+    coord_cartesian(ylim = y_bounds) +
+    labs(
+      y = ylab_text,
+      x = "Treatment stage"
+    ) +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      strip.text = element_text(face = "bold")
+    )
+
+  if (has_batch_facets && "Batch" %in% names(final)) {
+    results_plot <- results_plot +
+      facet_grid(rows = vars(Variable), cols = vars(Batch))
+  } else {
+    results_plot <- results_plot +
+      facet_wrap(vars(Variable), ncol = min(3, max(1, n_outcomes)))
+  }
+
+  ggsave(
+    plot = results_plot,
+    filename = output_path,
+    device = cairo_pdf,
+    width = if (has_batch_facets) 12 else 10,
+    height = plot_height,
+    units = "in"
+  )
 }
 
 build_combined_stage_data <- function(estimates_dir) {
@@ -467,14 +587,12 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, x
       coord_cartesian(xlim = x_bounds) +
       labs(
         x = xlab_text,
-        y = NULL,
-        caption = family_note(family_key, batch_label)
+        y = NULL
       ) +
       theme_bw() +
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(hjust = 0)
+        panel.grid.minor = element_blank()
       )
 
     ggsave(
@@ -517,14 +635,12 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
       coord_cartesian(xlim = x_bounds) +
       labs(
         x = xlab_text,
-        y = NULL,
-        caption = family_note(family_key, batch_label)
+        y = NULL
       ) +
       theme_bw() +
       theme(
         panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(hjust = 0)
+        panel.grid.minor = element_blank()
       )
 
     ggsave(
@@ -564,14 +680,12 @@ plot_combined_balance_family <- function(original_dir, permutations_dir, output_
     facet_wrap(~Batch, nrow = 1) +
     labs(
       x = "Average treatment effect, with 95% confidence interval",
-      y = NULL,
-      caption = family_note(family_key)
+      y = NULL
     ) +
     theme_bw() +
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-      panel.grid.minor = element_blank(),
-      plot.caption = element_text(hjust = 0)
+      panel.grid.minor = element_blank()
     )
 
   ggsave(
@@ -602,57 +716,20 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Average
       next
     }
 
-    n_vars <- nlevels(droplevels(final$Variable))
+    panel_dfs <- split_stage_panel_data(final)
 
-    if (n_vars > length(shape_palette)) {
-      stop(
-        paste0(
-          "plot_stage_estimates only has ", length(shape_palette),
-          " point shapes configured, but received ", n_vars, " outcomes in ", filename, "."
-        ),
-        call. = FALSE
-      )
-    }
-
-    y_bounds <- axis_bounds(final$lower, final$upper)
-    plot_height <- max(7.25, 0.38 * n_vars + 2.25)
-    batch_label <- batch_from_name(filename)
-
-    results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
-      geom_point(
-        aes(shape = Variable, color = Variable),
-        size = 3,
-        position = position_dodge(width = 0.5)
-      ) +
-      geom_linerange(
-        aes(ymin = lower, ymax = upper, color = Variable),
-        position = position_dodge(width = 0.5),
-        linewidth = 1
-      ) +
-      scale_shape_manual(values = shape_palette[seq_len(n_vars)], name = "Outcome") +
-      scale_color_manual(values = rep("black", n_vars), name = "Outcome") +
-      geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
-      coord_cartesian(ylim = y_bounds) +
-      labs(
-        y = ylab_text,
-        x = "Treatment stage",
-        caption = family_note(family_key, batch_label)
-      ) +
-      theme_bw() +
-      theme(
-        panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.caption = element_text(hjust = 0)
-      )
-
-    ggsave(
-      plot = results_plot,
-      filename = file.path(output_dir, sub("_estimates\\.xlsx$", ".pdf", filename)),
-      device = cairo_pdf,
-      width = 9.5,
-      height = plot_height,
-      units = "in"
+    walk(
+      names(panel_dfs),
+      function(panel_key) {
+        plot_stage_panel_facets(
+          final = droplevels(panel_dfs[[panel_key]]),
+          output_path = file.path(
+            output_dir,
+            sub("_estimates\\.xlsx$", paste0("_", panel_key, ".pdf"), filename)
+          ),
+          ylab_text = ylab_text
+        )
+      }
     )
   }
 }
@@ -672,57 +749,18 @@ plot_combined_stage_family <- function(estimates_dir, output_path, family_title_
   family_key <- sub("_batches\\.pdf$", "", family_key)
   family_key <- sub("\\.pdf$", "", family_key)
   final$Batch <- factor(final$Batch, levels = c("Batch 1 only", "Batch 2 only", "Both batches"))
-  n_vars <- nlevels(droplevels(final$Variable))
+  panel_dfs <- split_stage_panel_data(final)
 
-  if (n_vars > length(shape_palette)) {
-    stop(
-      paste0(
-        "plot_combined_stage_family only has ", length(shape_palette),
-        " point shapes configured, but received ", n_vars, " outcomes in ", family_key, "."
-      ),
-      call. = FALSE
-    )
-  }
-
-  y_bounds <- axis_bounds(final$lower, final$upper)
-  plot_height <- max(6.59, 0.38 * n_vars + 2.25)
-
-  results_plot <- ggplot(final, aes(x = Stage, y = coef)) +
-    geom_point(
-      aes(shape = Variable, color = Variable),
-      size = 3,
-      position = position_dodge(width = 0.5)
-    ) +
-    geom_linerange(
-      aes(ymin = lower, ymax = upper, color = Variable),
-      position = position_dodge(width = 0.5),
-      linewidth = 1
-    ) +
-    scale_shape_manual(values = shape_palette[seq_len(n_vars)], name = "Outcome") +
-    scale_color_manual(values = rep("black", n_vars), name = "Outcome") +
-    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
-    coord_cartesian(ylim = y_bounds) +
-    facet_wrap(~Batch, nrow = 1) +
-    labs(
-      y = ylab_text,
-      x = "Treatment stage",
-      caption = family_note(family_key)
-    ) +
-    theme_bw() +
-    theme(
-      panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-      panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.caption = element_text(hjust = 0)
-    )
-
-  ggsave(
-    plot = results_plot,
-    filename = output_path,
-    device = cairo_pdf,
-    width = 12,
-    height = plot_height,
-    units = "in"
+  walk(
+    names(panel_dfs),
+    function(panel_key) {
+      plot_stage_panel_facets(
+        final = droplevels(panel_dfs[[panel_key]]),
+        output_path = panel_output_path(output_path, panel_key),
+        ylab_text = ylab_text,
+        has_batch_facets = TRUE
+      )
+    }
   )
 }
 

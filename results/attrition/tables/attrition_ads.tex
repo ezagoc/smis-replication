@@ -1,0 +1,24 @@
+\begin{table}[!htbp]
+    \centering
+    \caption{Attrition balance: ads specification}
+    \label{tab:attrition_ads}
+    \scriptsize
+    \begin{adjustbox}{width=\textwidth}
+    \begin{tabular}{lccccccccc}
+    \toprule
+     & \multicolumn{3}{c}{Batch 1} & \multicolumn{3}{c}{Batch 2} & \multicolumn{3}{c}{Both batches} \\
+    \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+     & Not Yet Scraped & Blocked/Unavailable & Any Attrition & Not Yet Scraped & Blocked/Unavailable & Any Attrition & Not Yet Scraped & Blocked/Unavailable & Any Attrition \\
+    \midrule
+    Ads treatment & -0.020*** & -0.013*** & -0.033*** & -0.002 & 0.001 & -0.001 & -0.015*** & -0.009*** & -0.023*** \\
+     & (0.001) & (0.001) & (0.001) & (0.003) & (0.003) & (0.004) & (0.001) & (0.001) & (0.001) \\
+    Pure control mean & 0.010 & 0.006 & 0.016 & 0.152 & 0.099 & 0.251 & 0.046 & 0.029 & 0.075 \\
+    Observations & 100690 & 100690 & 100690 & 45376 & 45376 & 45376 & 146066 & 146066 & 146066 \\
+    Current ads sample restrictions & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Stratification block FE & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Permutation-based SE & No & No & No & No & No & No & No & No & No \\
+    \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \floatfoot{\textit{Notes:} Columns report the effect of ads treatment on endline attrition outcomes for the current ads-analysis sample. The sample applies the same baseline-posting, percentile, and influencer-count restrictions used in the main ads regressions. Batch 1, Batch 2, and both batches pooled are shown separately. Standard errors are heteroskedasticity-robust.}
+\end{table}

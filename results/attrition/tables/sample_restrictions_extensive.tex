@@ -1,0 +1,24 @@
+\begin{table}[!htbp]
+    \centering
+    \caption{Balance of current sample restrictions: extensive specification}
+    \label{tab:sample_restrictions_extensive}
+    \scriptsize
+    \begin{adjustbox}{width=\textwidth}
+    \begin{tabular}{lcccccc}
+    \toprule
+     & \multicolumn{2}{c}{Batch 1} & \multicolumn{2}{c}{Batch 2} & \multicolumn{2}{c}{Both batches} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+     & Within current percentile sample & Users with >0 baseline posts & Within current percentile sample & Users with >0 baseline posts & Within current percentile sample & Users with >0 baseline posts \\
+    \midrule
+    Treated SMI & 0.005 & -0.052 & 0.050*** & -0.103 & 0.019** & -0.065 \\
+     & (0.012) & (0.060) & (0.019) & (0.095) & (0.009) & (0.053) \\
+    Pure control mean & 0.912 & 0.779 & 0.902 & 0.774 & 0.909 & 0.778 \\
+    Observations & 77266 & 77266 & 48514 & 48514 & 125780 & 125780 \\
+    One-influencer sample & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Country and batch FE & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Permutation-based SE & Yes & Yes & Yes & Yes & Yes & Yes \\
+    \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \floatfoot{\textit{Notes:} Columns report the effect of treatment assignment on indicators for satisfying the current extensive-analysis sample restrictions. The first outcome is the indicator for remaining inside the current percentile-screen sample, and the second outcome indicates whether a user made more than zero baseline posts. The one-influencer extensive sample definition is retained, but these two restriction outcomes are not imposed before estimation. Standard errors are permutation-based standard deviations computed from 1,000 reassigned treatment draws.}
+\end{table}

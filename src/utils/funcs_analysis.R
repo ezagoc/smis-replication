@@ -111,11 +111,17 @@ generate_interactions <- function(ints){
   ints <- ints |> select(follower_id, pais, batch_id, total_treated, 
                          total_influencers)
   
-  ints <- dummy_cols(ints, select_columns = "total_treated", 
-                     remove_first_dummy = FALSE) # Generate total treated dummies
+  ints <- fastDummies::dummy_cols(
+    ints,
+    select_columns = "total_treated",
+    remove_first_dummy = FALSE
+  ) # Generate total treated dummies
   
-  ints <- dummy_cols(ints, select_columns = "total_influencers", 
-                     remove_first_dummy = FALSE) # Generate total influencers dummies
+  ints <- fastDummies::dummy_cols(
+    ints,
+    select_columns = "total_influencers",
+    remove_first_dummy = FALSE
+  ) # Generate total influencers dummies
   
   ints <- ints |>  
     mutate(across(starts_with('total_influencers_'), 

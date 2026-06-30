@@ -53,7 +53,7 @@ outcome_vars_base <- c(
 )
 output_names <- c(
   "total_shares", "total_comments", "total_reactions",
-  "ver", "non_ver", "true", "fake", "n_posts", "eng",
+  "verifiability", "non_ver", "true", "fake", "n_posts", "eng",
   "n_posts_covid", "pos_b_covid", "neutral_b_covid", "neg_b_covid",
   "n_posts_vax", "pos_b_vax", "neutral_b_vax", "neg_b_vax"
 )
@@ -199,7 +199,7 @@ write_outputs <- function(type, batch_name, original_coefs, permutation_coefs) {
         var == "total_shares" ~ paste0(addon, "Total Shares"),
         var == "total_comments" ~ paste0(addon, "Total Comments"),
         var == "total_reactions" ~ paste0(addon, "Total Reactions"),
-        var == "ver" ~ paste0(addon, "Verifiable RTs + Posts"),
+        var == "verifiability" ~ paste0(addon, "Verifiable RTs + Posts"),
         var == "non_ver" ~ paste0(addon, "Non-Verifiable RTs + Posts"),
         var == "true" ~ paste0(addon, "True RTs + Posts"),
         var == "fake" ~ paste0(addon, "Fake RTs + Posts"),

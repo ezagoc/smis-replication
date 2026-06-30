@@ -1,0 +1,24 @@
+\begin{table}[!htbp]
+    \centering
+    \caption{Balance of current sample restrictions: ads specification}
+    \label{tab:sample_restrictions_ads}
+    \scriptsize
+    \begin{adjustbox}{width=\textwidth}
+    \begin{tabular}{lcccccc}
+    \toprule
+     & \multicolumn{2}{c}{Batch 1} & \multicolumn{2}{c}{Batch 2} & \multicolumn{2}{c}{Both batches} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+     & Within current percentile sample & Users with >0 baseline posts & Within current percentile sample & Users with >0 baseline posts & Within current percentile sample & Users with >0 baseline posts \\
+    \midrule
+    Ads treatment & 0.000 & 0.000 & -0.002 & 0.002 & -0.001 & 0.001 \\
+     & (0.001) & (0.002) & (0.002) & (0.003) & (0.001) & (0.001) \\
+    Pure control mean & 0.912 & 0.794 & 0.886 & 0.788 & 0.906 & 0.792 \\
+    Observations & 141641 & 141641 & 68537 & 68537 & 210178 & 210178 \\
+    Influencer-count restriction (< 9) & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Stratification block FE & Yes & Yes & Yes & Yes & Yes & Yes \\
+    Permutation-based SE & No & No & No & No & No & No \\
+    \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+    \floatfoot{\textit{Notes:} Columns report the effect of ads treatment on indicators for satisfying the current ads-analysis sample restrictions. The first outcome is the indicator for remaining inside the current percentile-screen sample, and the second outcome indicates whether a user made more than zero baseline posts. The ads sample keeps the same influencer-count restriction as the main regressions, but these two restriction outcomes are not imposed before estimation. Standard errors are heteroskedasticity-robust.}
+\end{table}

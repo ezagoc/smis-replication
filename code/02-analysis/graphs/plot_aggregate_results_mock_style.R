@@ -833,11 +833,9 @@ build_mock_plot <- function(plot_df, sample_key, batch_code) {
     }
   )
 
-      wrap_plots(panel_plots, ncol = 1, heights = panel_heights) +
+  wrap_plots(panel_plots, ncol = 1, heights = panel_heights) +
     plot_annotation(
-      caption = figure_note(sample_key, batch_code),
       theme = theme(
-        plot.caption = element_text(size = 9.5, hjust = 0, color = "black"),
         plot.margin = margin(t = 8, r = 8, b = 8, l = 8)
       )
     )

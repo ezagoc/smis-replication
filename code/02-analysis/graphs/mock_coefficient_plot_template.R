@@ -281,14 +281,9 @@ final_plot <- p_a / p_b / p_c +
   plot_annotation(
     title = "Average effect of one initially-followed SMI being assigned to treatment on online follower behaviors",
     subtitle = "Aggregated effects across weeks 1–12, batch 1",
-    caption = paste0(
-      "Notes: Mock data for design prototyping only. Whiskers show 95% confidence intervals.\n",
-      "Visual design inspired by minimalist coefficient plots common in Nature Human Behaviour, Science Advances, and PNAS."
-    ),
     theme = theme(
       plot.title = element_text(size = 18, face = "bold", hjust = 0),
       plot.subtitle = element_text(size = 13, color = "grey35", hjust = 0),
-      plot.caption = element_text(size = 9.5, hjust = 0, color = "black"),
       plot.margin = margin(t = 8, r = 8, b = 8, l = 8)
     )
   )

@@ -27,8 +27,8 @@ cleanup_scripts <- c(
   #"first_stage_extensive_all_transforms_strong_tables.R",
   #"first_stage_intensive_all_transforms_tables.R",
   #"first_stage_intensive_all_transforms_strong_tables.R",
-  #"export_aggregate_control_stats.R",
-  #"../graphs/plot_saved_results_only.R",
+  "export_aggregate_control_stats.R",
+  "../graphs/plot_saved_results_only.R",
   "../graphs/plot_aggregate_results_mock_style.R"
 )
 
