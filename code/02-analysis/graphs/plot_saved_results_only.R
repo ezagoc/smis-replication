@@ -391,6 +391,7 @@ build_estimate_only_horizontal_data <- function(estimate_path) {
 
 build_combined_horizontal_data <- function(original_dir, permutations_dir) {
   original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  original_files <- preferred_xlsx_files(original_files)
 
   map_dfr(original_files, function(original_path) {
     filename <- basename(original_path)
@@ -476,14 +477,32 @@ panel_output_path <- function(path, panel_key) {
   paste0(stem, "_", panel_key, ".pdf")
 }
 
-estimate_stage_panel_height <- function(n_outcomes, has_batch_facets = FALSE) {
-  if (has_batch_facets) {
-    return(max(5.5, 1.8 * n_outcomes + 1.5))
+preferred_xlsx_files <- function(paths) {
+  if (length(paths) == 0) {
+    return(paths)
   }
 
-  n_cols <- min(3, max(1, n_outcomes))
+  tibble(path = paths, file = basename(paths)) |>
+    mutate(
+      base_key = sub("_(\\d+)perm(?=(_estimates)?\\.xlsx$)", "", file, perl = TRUE),
+      perm_count = suppressWarnings(
+        as.integer(sub("^.*_(\\d+)perm(?:_estimates)?\\.xlsx$", "\\1", file, perl = TRUE))
+      ),
+      perm_count = ifelse(is.na(perm_count), -1L, perm_count)
+    ) |>
+    arrange(base_key, desc(perm_count), file) |>
+    distinct(base_key, .keep_all = TRUE) |>
+    pull(path)
+}
+
+estimate_stage_panel_height <- function(n_outcomes, has_batch_facets = FALSE) {
+  if (has_batch_facets) {
+    return(max(4.8, 1.45 * n_outcomes + 1.2))
+  }
+
+  n_cols <- if (n_outcomes <= 2) 1 else 2
   n_rows <- ceiling(n_outcomes / n_cols)
-  max(4.8, 2.75 * n_rows + 1.0)
+  max(4.0, 2.0 * n_rows + 0.8)
 }
 
 plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_facets = FALSE) {
@@ -514,8 +533,11 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
     theme(
       panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      strip.text = element_text(face = "bold")
+      axis.text.x = element_text(angle = 35, hjust = 1, size = 8.5),
+      axis.text.y = element_text(size = 8.5),
+      axis.title = element_text(size = 9.5),
+      strip.text = element_text(face = "bold", size = 9),
+      panel.spacing = unit(0.7, "lines")
     )
 
   if (has_batch_facets && "Batch" %in% names(final)) {
@@ -523,14 +545,14 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
       facet_grid(rows = vars(Variable), cols = vars(Batch))
   } else {
     results_plot <- results_plot +
-      facet_wrap(vars(Variable), ncol = min(3, max(1, n_outcomes)))
+      facet_wrap(vars(Variable), ncol = if (n_outcomes <= 2) 1 else 2)
   }
 
   ggsave(
     plot = results_plot,
     filename = output_path,
     device = cairo_pdf,
-    width = if (has_batch_facets) 12 else 10,
+    width = if (has_batch_facets) 10.5 else 8.75,
     height = plot_height,
     units = "in"
   )
@@ -538,6 +560,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
 
 build_combined_stage_data <- function(estimates_dir) {
   estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  estimate_files <- preferred_xlsx_files(estimate_files)
 
   map_dfr(estimate_files, function(estimate_path) {
     filename <- basename(estimate_path)
@@ -561,6 +584,7 @@ plot_horizontal_family <- function(original_dir, permutations_dir, output_dir, x
   family_key <- basename(output_dir)
 
   original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  original_files <- preferred_xlsx_files(original_files)
 
   for (original_path in original_files) {
     filename <- basename(original_path)
@@ -615,6 +639,7 @@ plot_estimate_only_horizontal_family <- function(estimates_dir, output_dir, xlab
   family_key <- basename(output_dir)
 
   estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  estimate_files <- preferred_xlsx_files(estimate_files)
 
   for (estimate_path in estimate_files) {
     filename <- basename(estimate_path)
@@ -707,6 +732,7 @@ plot_stage_estimates <- function(estimates_dir, output_dir, ylab_text = "Average
   family_key <- basename(output_dir)
 
   estimate_files <- list.files(estimates_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  estimate_files <- preferred_xlsx_files(estimate_files)
 
   for (estimate_path in estimate_files) {
     filename <- basename(estimate_path)

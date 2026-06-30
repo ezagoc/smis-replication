@@ -51,7 +51,7 @@ run_isolated_source <- function(path) {
 
   message("")
   message("========================================")
-  message("Sourcing: ", basename(full_path))
+  message("Sourcing: ", path)
   message("========================================")
 
   source(
@@ -63,11 +63,9 @@ run_isolated_source <- function(path) {
 }
 
 scripts_to_run <- c(
-  #"00-preprocess_attrition_data.R",
-  #"01-attrition_ads.R",
-  #"02-attrition_extensive.R",
-  "03-attrition_intensive.R",
-  "04-sample_restriction_balance.R"
+  "../attrition/run_all_attrition_tables.R",
+  "../graphs/plot_saved_results_only.R",
+  "../graphs/plot_aggregate_results_mock_style.R"
 )
 
 invisible(lapply(scripts_to_run, run_isolated_source))

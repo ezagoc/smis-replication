@@ -1,6 +1,21 @@
 rm(list = ls())
 
 resolve_script_dir <- function() {
+  frame_files <- vapply(
+    sys.frames(),
+    function(env) {
+      ofile <- env$ofile
+      if (is.null(ofile)) "" else ofile
+    },
+    character(1)
+  )
+
+  frame_files <- frame_files[nzchar(frame_files)]
+
+  if (length(frame_files) > 0) {
+    return(dirname(normalizePath(tail(frame_files, 1), winslash = "/", mustWork = TRUE)))
+  }
+
   rstudio_path <- tryCatch(
     {
       if (requireNamespace("rstudioapi", quietly = TRUE)) {
@@ -51,13 +66,17 @@ results_df <- run_ads_balance_analysis(
   outcome_vars = names(attrition_outcome_labels)
 )
 
+display_df <- results_df |>
+  filter(batch %in% attrition_table_batch_order) |>
+  filter(!(batch == "b1" & outcome_var == "dummy_attrition"))
+
 write_xlsx(
-  results_df,
+  display_df,
   file.path(tables_data_dir, "attrition_ads.xlsx")
 )
 
 write_attrition_table(
-  results_df = results_df,
+  results_df = display_df,
   outcome_labels = attrition_outcome_labels,
   output_path = file.path(tables_dir, "attrition_ads.tex"),
   caption = "Attrition balance: ads specification",
@@ -66,12 +85,14 @@ write_attrition_table(
   notes = paste(
     "Columns report the effect of ads treatment on endline attrition outcomes for the current ads-analysis sample.",
     "The sample applies the same baseline-posting, percentile, and influencer-count restrictions used in the main ads regressions.",
-    "Batch 1, Batch 2, and both batches pooled are shown separately.",
+    "Batch 1 and Batch 2 are shown separately; the not-yet-scraped outcome is only relevant for Batch 2 because Batch 1 scraping is complete.",
     "Standard errors are heteroskedasticity-robust."
   ),
   spec_rows = list(
     list(label = "Current ads sample restrictions", value = "Yes"),
     list(label = "Stratification block FE", value = "Yes"),
     list(label = "Permutation-based SE", value = "No")
-  )
+  ),
+  batch_order = attrition_table_batch_order,
+  outcome_order_by_batch = attrition_table_outcomes_by_batch
 )

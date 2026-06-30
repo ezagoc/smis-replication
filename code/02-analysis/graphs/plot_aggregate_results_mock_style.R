@@ -191,6 +191,24 @@ batch_from_name <- function(filename) {
   NA_character_
 }
 
+preferred_xlsx_files <- function(paths) {
+  if (length(paths) == 0) {
+    return(paths)
+  }
+
+  tibble(path = paths, file = basename(paths)) |>
+    mutate(
+      base_key = sub("_(\\d+)perm(?=(_estimates)?\\.xlsx$)", "", file, perl = TRUE),
+      perm_count = suppressWarnings(
+        as.integer(sub("^.*_(\\d+)perm(?:_estimates)?\\.xlsx$", "\\1", file, perl = TRUE))
+      ),
+      perm_count = ifelse(is.na(perm_count), -1L, perm_count)
+    ) |>
+    arrange(base_key, desc(perm_count), file) |>
+    distinct(base_key, .keep_all = TRUE) |>
+    pull(path)
+}
+
 batch_title <- function(batch_code) {
   c(b1 = "Batch 1 only", b2 = "Batch 2 only", both = "Both batches")[[batch_code]]
 }
@@ -398,6 +416,7 @@ outcome_label_from_root <- function(outcome_root, sample_key) {
 
 read_standard_estimates <- function(estimates_dir, sample_key) {
   estimate_files <- list.files(estimates_dir, pattern = "_estimates\\.xlsx$", full.names = TRUE)
+  estimate_files <- preferred_xlsx_files(estimate_files)
 
   map(
     estimate_files,
@@ -428,6 +447,7 @@ read_standard_estimates <- function(estimates_dir, sample_key) {
 
 read_original_permutation_estimates <- function(original_dir, permutations_dir, sample_key) {
   original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  original_files <- preferred_xlsx_files(original_files)
 
   map(
     original_files,
@@ -468,6 +488,7 @@ read_followers_permutation_estimates <- function(results_dir) {
   permutations_dir <- file.path(results_dir, "permutations")
 
   original_files <- list.files(original_dir, pattern = "\\.xlsx$", full.names = TRUE)
+  original_files <- preferred_xlsx_files(original_files)
 
   map(
     original_files,

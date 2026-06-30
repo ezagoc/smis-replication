@@ -38,6 +38,13 @@ sample_restriction_labels <- c(
   positive_baseline_posts = "Users with >0 baseline posts"
 )
 
+attrition_table_batch_order <- c("b1", "b2")
+
+attrition_table_outcomes_by_batch <- list(
+  b1 = c("overall_blocked", "dummy_both"),
+  b2 = c("dummy_attrition", "overall_blocked", "dummy_both")
+)
+
 load_stage1_analysis_frame <- function(initial_path = repo_initial_path()) {
   get_analysis_ver_final_winsor(
     stage = "stage1_2",
@@ -487,19 +494,27 @@ build_attrition_table_tex <- function(
   treatment_label,
   notes,
   spec_rows = list(),
-  digits = 3
+  digits = 3,
+  batch_order = names(batch_specs),
+  batch_labels_override = batch_labels,
+  outcome_order_by_batch = NULL
 ) {
-  batch_order <- names(batch_specs)
-  outcome_order <- names(outcome_labels)
-  n_outcomes <- length(outcome_order)
-  total_columns <- length(batch_order) * n_outcomes
+  if (is.null(outcome_order_by_batch)) {
+    outcome_order_by_batch <- set_names(
+      replicate(length(batch_order), names(outcome_labels), simplify = FALSE),
+      batch_order
+    )
+  }
+
+  outcome_counts <- map_int(batch_order, \(batch_name) length(outcome_order_by_batch[[batch_name]]))
+  total_columns <- sum(outcome_counts)
   tabular_spec <- paste0("l", paste(rep("c", total_columns), collapse = ""))
 
   cmidrules <- vapply(
     seq_along(batch_order),
     function(i) {
-      start_col <- 2 + (i - 1) * n_outcomes
-      end_col <- start_col + n_outcomes - 1
+      start_col <- 2 + sum(outcome_counts[seq_len(i - 1)])
+      end_col <- start_col + outcome_counts[[i]] - 1
       paste0("\\cmidrule(lr){", start_col, "-", end_col, "}")
     },
     character(1)
@@ -510,7 +525,15 @@ build_attrition_table_tex <- function(
       "",
       vapply(
         batch_order,
-        function(batch_name) paste0("\\multicolumn{", n_outcomes, "}{c}{", batch_labels[[batch_name]], "}"),
+        function(batch_name) {
+          paste0(
+            "\\multicolumn{",
+            length(outcome_order_by_batch[[batch_name]]),
+            "}{c}{",
+            batch_labels_override[[batch_name]],
+            "}"
+          )
+        },
         character(1)
       )
     ),
@@ -520,7 +543,13 @@ build_attrition_table_tex <- function(
   header_outcomes <- paste(
     c(
       "",
-      rep(unname(outcome_labels), times = length(batch_order))
+      unlist(
+        map(
+          batch_order,
+          \(batch_name) unname(outcome_labels[outcome_order_by_batch[[batch_name]]])
+        ),
+        use.names = FALSE
+      )
     ),
     collapse = " & "
   )
@@ -529,7 +558,7 @@ build_attrition_table_tex <- function(
     values <- c()
 
     for (batch_name in batch_order) {
-      for (current_outcome_var in outcome_order) {
+      for (current_outcome_var in outcome_order_by_batch[[batch_name]]) {
         match_row <- results_df |>
           filter(batch == batch_name, outcome_var == current_outcome_var)
 
@@ -557,18 +586,20 @@ build_attrition_table_tex <- function(
   n_row <- paste(
     c(
       "Observations",
-      vapply(
-        batch_order,
-        function(batch_name) {
-          batch_n <- results_df |>
-            filter(batch == batch_name) |>
-            summarise(n = max(n, na.rm = TRUE)) |>
-            pull(n)
+      unlist(
+        map(
+          batch_order,
+          function(batch_name) {
+            batch_n <- results_df |>
+              filter(batch == batch_name) |>
+              summarise(n = max(n, na.rm = TRUE)) |>
+              pull(n)
 
-          rep(as.character(batch_n[[1]]), times = n_outcomes)
-        },
-        character(n_outcomes)
-      ) |> as.vector()
+            rep(as.character(batch_n[[1]]), times = length(outcome_order_by_batch[[batch_name]]))
+          }
+        ),
+        use.names = FALSE
+      )
     ),
     collapse = " & "
   )
@@ -628,7 +659,10 @@ write_attrition_table <- function(
   label,
   treatment_label,
   notes,
-  spec_rows = list()
+  spec_rows = list(),
+  batch_order = names(batch_specs),
+  batch_labels_override = batch_labels,
+  outcome_order_by_batch = NULL
 ) {
   dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
 
@@ -639,7 +673,10 @@ write_attrition_table <- function(
     label = label,
     treatment_label = treatment_label,
     notes = notes,
-    spec_rows = spec_rows
+    spec_rows = spec_rows,
+    batch_order = batch_order,
+    batch_labels_override = batch_labels_override,
+    outcome_order_by_batch = outcome_order_by_batch
   )
 
   writeLines(tex, output_path)

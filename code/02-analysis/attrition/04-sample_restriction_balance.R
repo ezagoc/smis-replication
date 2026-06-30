@@ -1,6 +1,21 @@
 rm(list = ls())
 
 resolve_script_dir <- function() {
+  frame_files <- vapply(
+    sys.frames(),
+    function(env) {
+      ofile <- env$ofile
+      if (is.null(ofile)) "" else ofile
+    },
+    character(1)
+  )
+
+  frame_files <- frame_files[nzchar(frame_files)]
+
+  if (length(frame_files) > 0) {
+    return(dirname(normalizePath(tail(frame_files, 1), winslash = "/", mustWork = TRUE)))
+  }
+
   rstudio_path <- tryCatch(
     {
       if (requireNamespace("rstudioapi", quietly = TRUE)) {
