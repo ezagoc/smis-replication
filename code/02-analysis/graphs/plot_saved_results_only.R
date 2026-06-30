@@ -524,6 +524,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
   variable_shapes <- setNames(shape_palette[seq_len(n_outcomes)], variable_levels)
   variable_offsets <- setNames(seq(-0.28, 0.28, length.out = n_outcomes), variable_levels)
   stage_positions <- setNames(seq_along(levels(final$Stage)), levels(final$Stage))
+  max_label_chars <- max(nchar(variable_levels), na.rm = TRUE)
 
   final <- final |>
     mutate(
@@ -537,6 +538,14 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
   y_bounds <- axis_bounds(final$lower, final$upper, pad_fraction = 0.1, min_pad = 0.02)
   plot_height <- estimate_stage_panel_height(n_outcomes, has_batch_facets = has_batch_facets)
   x_limits <- c(min(final$x) - 0.18, max(final$x) + 0.18)
+  base_width <- if (has_batch_facets) 12.2 else 8.8
+  width_bonus <- case_when(
+    max_label_chars >= 32 ~ 2.6,
+    max_label_chars >= 26 ~ 1.8,
+    max_label_chars >= 22 ~ 1.1,
+    TRUE ~ 0.4
+  )
+  plot_width <- base_width + width_bonus
 
   results_plot <- ggplot(final, aes(x = x, y = coef, shape = Variable)) +
     geom_vline(
@@ -559,7 +568,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
       y = ylab_text,
       shape = "Outcome"
     ) +
-    guides(shape = guide_legend(override.aes = list(size = 2.8), ncol = if (n_outcomes > 6) 2 else 1)) +
+    guides(shape = guide_legend(override.aes = list(size = 2.8), ncol = 1, byrow = TRUE)) +
     theme_bw() +
     theme(
       panel.grid.major.x = element_blank(),
@@ -570,7 +579,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
       axis.title = element_text(size = 9.5),
       strip.text = element_text(face = "bold", size = 9),
       legend.position = "right",
-      legend.text = element_text(size = 8.2),
+      legend.text = element_text(size = 7.8),
       panel.spacing = unit(0.75, "lines"),
       legend.box = "vertical",
       plot.margin = margin(t = 6, r = 10, b = 6, l = 8)
@@ -585,7 +594,7 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
     plot = results_plot,
     filename = output_path,
     device = cairo_pdf,
-    width = if (has_batch_facets) 12.2 else 8.8,
+    width = plot_width,
     height = plot_height,
     units = "in"
   )
