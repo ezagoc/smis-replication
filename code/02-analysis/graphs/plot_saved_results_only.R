@@ -497,12 +497,10 @@ preferred_xlsx_files <- function(paths) {
 
 estimate_stage_panel_height <- function(n_outcomes, has_batch_facets = FALSE) {
   if (has_batch_facets) {
-    return(max(4.8, 1.45 * n_outcomes + 1.2))
+    return(max(4.8, 0.46 * n_outcomes + 2.1))
   }
 
-  n_cols <- if (n_outcomes <= 2) 1 else 2
-  n_rows <- ceiling(n_outcomes / n_cols)
-  max(4.0, 2.0 * n_rows + 0.8)
+  max(4.1, 0.54 * n_outcomes + 1.9)
 }
 
 plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_facets = FALSE) {
@@ -510,49 +508,83 @@ plot_stage_panel_facets <- function(final, output_path, ylab_text, has_batch_fac
     return(invisible(NULL))
   }
 
+  stage_shapes <- c(
+    "Weeks 1-4" = 16,
+    "Weeks 5-8" = 17,
+    "Weeks 9-12" = 15
+  )
+  stage_offsets <- c(
+    "Weeks 1-4" = 0.28,
+    "Weeks 5-8" = 0,
+    "Weeks 9-12" = -0.28
+  )
+
+  variable_levels <- ordered_stage_labels(final$var, as.character(final$Variable))
+  y_breaks <- rev(seq_along(variable_levels))
+
   final <- final |>
     mutate(
-      Variable = factor(as.character(Variable), levels = ordered_stage_labels(var, as.character(Variable)))
+      Variable = as.character(Variable),
+      y_base = y_breaks[match(Variable, variable_levels)],
+      y = y_base + unname(stage_offsets[as.character(Stage)])
     ) |>
-    arrange(Variable, Stage)
+    arrange(desc(y_base), Stage)
 
-  y_bounds <- axis_bounds(final$lower, final$upper)
-  n_outcomes <- nlevels(droplevels(final$Variable))
+  x_bounds <- axis_bounds(final$lower, final$upper)
+  n_outcomes <- length(variable_levels)
   plot_height <- estimate_stage_panel_height(n_outcomes, has_batch_facets = has_batch_facets)
+  separator_df <- tibble(y = seq_len(max(0, n_outcomes - 1)) + 0.5)
 
-  results_plot <- ggplot(final, aes(x = Stage, y = coef, group = 1)) +
-    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
-    geom_point(size = 2.2) +
-    geom_linerange(aes(ymin = lower, ymax = upper), linewidth = 0.9) +
-    coord_cartesian(ylim = y_bounds) +
-    labs(
-      y = ylab_text,
-      x = "Treatment stage"
+  results_plot <- ggplot(final, aes(x = coef, y = y, shape = Stage)) +
+    geom_hline(
+      data = separator_df,
+      aes(yintercept = y),
+      inherit.aes = FALSE,
+      linewidth = 0.35,
+      color = "grey85"
     ) +
+    geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.5) +
+    geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0, linewidth = 0.7) +
+    geom_point(size = 2.3) +
+    scale_shape_manual(values = stage_shapes, drop = FALSE) +
+    scale_y_continuous(
+      breaks = y_breaks,
+      labels = variable_levels,
+      limits = c(0.35, n_outcomes + 0.65)
+    ) +
+    coord_cartesian(xlim = x_bounds, clip = "off") +
+    labs(
+      x = ylab_text,
+      y = NULL,
+      shape = "Stage"
+    ) +
+    guides(shape = guide_legend(override.aes = list(size = 2.8))) +
     theme_bw() +
     theme(
-      panel.grid.major = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
+      panel.grid.major.y = element_blank(),
+      panel.grid.major.x = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
       panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 35, hjust = 1, size = 8.5),
-      axis.text.y = element_text(size = 8.5),
+      axis.text.x = element_text(size = 8.5),
+      axis.text.y = element_text(size = 8.5, margin = margin(r = 8)),
       axis.title = element_text(size = 9.5),
       strip.text = element_text(face = "bold", size = 9),
-      panel.spacing = unit(0.7, "lines")
+      legend.position = "bottom",
+      legend.title = element_text(size = 8.5),
+      legend.text = element_text(size = 8.2),
+      panel.spacing = unit(0.75, "lines"),
+      plot.margin = margin(t = 6, r = 18, b = 6, l = 10)
     )
 
   if (has_batch_facets && "Batch" %in% names(final)) {
     results_plot <- results_plot +
-      facet_grid(rows = vars(Variable), cols = vars(Batch))
-  } else {
-    results_plot <- results_plot +
-      facet_wrap(vars(Variable), ncol = if (n_outcomes <= 2) 1 else 2)
+      facet_wrap(vars(Batch), nrow = 1)
   }
 
   ggsave(
     plot = results_plot,
     filename = output_path,
     device = cairo_pdf,
-    width = if (has_batch_facets) 10.5 else 8.75,
+    width = if (has_batch_facets) 11.8 else 9.2,
     height = plot_height,
     units = "in"
   )
